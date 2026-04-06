@@ -6,8 +6,26 @@
 // Import industry codes
 // -------------------------------------------------------------------------- //
 
-import delimited "https://download.bls.gov/pub/time.series/sm/sm.industry", ///
-    varnames(1) delimiter("\t") clear encoding(utf8) stringcols(_all)
+// Retrieve industry codes via Python
+clear
+tempfile industry
+python:
+import pandas as pd
+import requests
+from io import StringIO
+url = "https://download.bls.gov/pub/time.series/sm/sm.industry"
+headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+resp = requests.get(url, headers=headers)
+resp.raise_for_status()
+df = pd.read_csv(StringIO(resp.text), sep="\t")
+df.to_csv(r"`industry'", index=False)
+end
+
+import delimited "`industry'", varnames(1) delimiter(",") clear encoding(utf8) stringcols(_all)
+
+// Fallback manual option if automatic download fails:
+//		import delimited "$rawdata/bls-data/sm.industry.txt", ///
+//    	varnames(1) delimiter("\t") clear encoding(utf8) stringcols(_all)
 
 generate supersector_code = substr(industry_code, 1, 2)
 generate naics_code       = substr(industry_code, 3, 6)
@@ -18,16 +36,43 @@ save "$work/01-import-sm/bls-sm-industry.dta", replace
 // Import area codes
 // -------------------------------------------------------------------------- //
 
-import delimited "https://download.bls.gov/pub/time.series/sm/sm.area", ///
-    varnames(1) delimiter("\t") clear encoding(utf8) stringcols(_all)
+// Retrieve area codes via Python
+tempfile area
+python:
+url = "https://download.bls.gov/pub/time.series/sm/sm.area"
+resp = requests.get(url, headers=headers)
+resp.raise_for_status()
+df = pd.read_csv(StringIO(resp.text), sep="\t")
+df.to_csv(r"`area'", index=False)
+end
+
+import delimited "`area'", varnames(1) delimiter(",") clear encoding(utf8) stringcols(_all)
+
+// Fallback manual option if automatic download fails:
+//		import delimited "$rawdata/bls-data/sm.area.txt", ///
+//	    varnames(1) delimiter("\t") clear encoding(utf8) stringcols(_all)
+
 save "$work/01-import-sm/bls-sm-area.dta", replace
 
 // -------------------------------------------------------------------------- //
 // Import data series
 // -------------------------------------------------------------------------- //
 
-import delimited "https://download.bls.gov/pub/time.series/sm/sm.data.1.AllData", ///
-    varnames(1) delimiter("\t") clear encoding(utf8)
+// Retrieve BLS employment data via Python
+tempfile sm
+python:
+url = "https://download.bls.gov/pub/time.series/sm/sm.data.1.AllData"
+resp = requests.get(url, headers=headers)
+resp.raise_for_status()
+df = pd.read_csv(StringIO(resp.text), sep="\t", low_memory=False)
+df.to_csv(r"`sm'", index=False)
+end
+
+import delimited "`sm'", varnames(1) delimiter(",") clear encoding(utf8)
+
+// Fallback manual option if automatic download fails:
+//		import delimited "$rawdata/bls-data/sm.data.1.AllData.txt", ///
+//	    varnames(1) delimiter("\t") clear encoding(utf8)
 
 destring value, ignore("- ") replace
 destring period, ignore("M") replace

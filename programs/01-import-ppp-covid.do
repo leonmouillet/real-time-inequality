@@ -39,12 +39,12 @@ foreach f of local files {
 // Import the PPP loan data
 // -------------------------------------------------------------------------- //
 
-import delimited "$rawdata/ppp-covid-data/public_150k_plus_220403.csv", clear bindquotes(strict) stringcols(_all)
+import delimited "$rawdata/ppp-covid-data/public_150k_plus_240930.csv", clear bindquotes(strict) stringcols(_all)
 keep dateapproved initialapprovalamount forgivenessdate projectzip jobsreported naicscode forgivenessamount *_proceed
 save "$work/01-import-ppp-covid/ppp-covid-data.dta", replace
 
 forvalues i = 1/12 {
-    import delimited "$rawdata/ppp-covid-data/public_up_to_150k_`i'_220403.csv", clear bindquotes(strict) stringcols(_all)
+    import delimited "$rawdata/ppp-covid-data/public_up_to_150k_`i'_240930.csv", clear bindquotes(strict) stringcols(_all)
     keep dateapproved initialapprovalamount forgivenessdate projectzip jobsreported naicscode forgivenessamount *_proceed
     append using "$work/01-import-ppp-covid/ppp-covid-data.dta"
     save "$work/01-import-ppp-covid/ppp-covid-data.dta", replace

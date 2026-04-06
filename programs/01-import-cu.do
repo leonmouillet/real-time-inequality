@@ -2,8 +2,31 @@
 // Import the BLS's price index (CPI for all urban consumers)
 // -------------------------------------------------------------------------- //
 
-import delimited "https://download.bls.gov/pub/time.series/cu/cu.data.1.AllItems", ///
-    varnames(1) delimiter("\t") clear encoding(utf8)
+// Retrieve BLS CPI data via Python
+clear
+tempfile cu
+python:
+import pandas as pd
+import requests
+from io import StringIO
+url = "https://download.bls.gov/pub/time.series/cu/cu.data.1.AllItems"
+headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+resp = requests.get(url, headers=headers)
+resp.raise_for_status()
+df = pd.read_csv(StringIO(resp.text), sep="\t")
+df.to_csv(r"`cu'", index=False)
+end
+
+import delimited "`cu'", varnames(1) delimiter(",") clear encoding(utf8)
+
+// Fallback manual option if automatic download fails:
+//   - Download the file manually from:
+//       <https://download.bls.gov/pub/time.series/cu/cu.data.1.AllItems>
+//     and save it as a text file with a .txt extension.
+//   - Store it under "$rawdata/bls-data/cu.data.1.AllItems.txt"
+//   - Load it in Stata using:
+//       import delimited "$rawdata/bls-data/cu.data.1.AllItems.txt", ///
+//           varnames(1) delimiter("\t") clear encoding(utf8)
 
 destring value, ignore("- ") replace
 destring period, ignore("MS") replace
@@ -27,6 +50,12 @@ rename period month
 keep year month value
 rename value cpi
 sort year month
+
+// Fix missing values
+ipolate cpi month, by(year) gen(cpi_filled)
+replace cpi = cpi_filled if missing(cpi)
+drop cpi_filled
+
 replace cpi = cpi/cpi[_N]
 
 save "$work/01-import-cu/bls-cpi.dta", replace

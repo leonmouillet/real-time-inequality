@@ -256,6 +256,3 @@ save "$work/02-prepare-fa/fa-simplified.dta", replace
 
 gcollapse (mean) fa_*, by(year)
 save "$work/02-prepare-fa/fa-simplified-yearly.dta", replace
-
-
-

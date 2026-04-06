@@ -13,19 +13,19 @@ save "$work/04-backtest/backtest-hweal.dta", replace emptyok
 // Monthly distributions
 // -------------------------------------------------------------------------- //
 
-global date_begin = ym(1976, 01)
-global date_end   = ym(2019, 12)
+local date_begin = ym(1976, 01)
+local date_end   = ym(2024, 12)
 
 quietly {
     foreach unit in /*"household" "individual"*/ "equal-split" {
         foreach v in princ peinc dispo poinc hweal {
-            foreach t of numlist $date_begin / $date_end {
+            foreach t of numlist `date_begin' / `date_end' {
                 local year = year(dofm(`t'))
                 local month = month(dofm(`t'))
                 
                 noisily di "-> `year'm`month', `v', `unit'"
             
-                use id weight `v' using "$work/03-build-monthly-microfiles/microfiles/dina-monthly-`year'm`month'.dta", clear
+                use id weight `v' using "$microfiles/$update_id/dina-monthly-`year'm`month'.dta", clear
                 
                 if ("`unit'" == "equal-split") {
                     gegen `v' = mean(`v'), by(id) replace
@@ -64,13 +64,13 @@ quietly {
 // Backtest, 1-year ahead
 // -------------------------------------------------------------------------- //
 
-global date_begin = ym(1976, 01)
-global date_end   = ym(2019, 12)
+local date_begin = ym(1976, 01)
+local date_end   = ym(2024, 12)
 
 quietly {
     foreach unit in /*"household" "individual"*/ "equal-split" {
         foreach v in princ peinc dispo poinc hweal {
-            foreach t of numlist $date_begin / $date_end {
+            foreach t of numlist `date_begin' / `date_end' {
                 local year = year(dofm(`t'))
                 local month = month(dofm(`t'))
                 
@@ -115,13 +115,13 @@ quietly {
 // Backtest, 2-year ahead
 // -------------------------------------------------------------------------- //
 
-global date_begin = ym(1976, 01)
-global date_end   = ym(2019, 12)
+local date_begin = ym(1976, 01)
+local date_end   = ym(2024, 12)
 
 quietly {
     foreach unit in /*"household" "individual"*/ "equal-split" {
         foreach v in princ peinc dispo poinc hweal {
-            foreach t of numlist $date_begin / $date_end {
+            foreach t of numlist `date_begin' / `date_end' {
                 local year = year(dofm(`t'))
                 local month = month(dofm(`t'))
                 
@@ -303,6 +303,9 @@ generate tax_reform = inlist(year, 1987, 1988, 1991, 1992, 1993, 2012, 2013, 200
 
 // Plots
 generate year_label = ""
+*generate year_label = ""
+*replace year_label = string(year) if year >= 2022
+
 generate year_pos = 3
 
 replace year_label = ""
@@ -322,6 +325,22 @@ gr tw (line chgref1_average99 chgref1_average99 if bracket == "bot50" & income =
     xtitle("Predicted growth rate (%)") ///
     ytitle("Actual growth rate (%)")
 graph export "$graphs/04-backtest/pred-avg-bot50-1y.pdf", replace
+
+replace year_label = ""
+replace year_label = "1985" if year == 1985
+
+// Bottom 50%
+gr tw (line chgref2_average99 chgref2_average99 if bracket == "bot50" & income == "princ" & unit == "equal-split" & !tax_reform, col(black) lw(medthick)) ///
+    (scatter chgref2_average99 chgref2_average2 if bracket == "bot50" & income == "princ" & unit == "equal-split" & !tax_reform, ///
+        col(ebblue) msym(O) mlabel(year_label) mlabcol(black)) ///
+    (scatter chgref2_average99 chgref2_average2 if bracket == "bot50" & income == "princ" & unit == "equal-split" & tax_reform, ///
+        col(cranberry) msym(T) mlabel(year_label) mlabvpos(year_pos) mlabcol(black)), ///
+    aspectratio(1) xsize(4) ysize(4) legend(off) scale(1.2) ///
+    xscale(range(-10 10)) yscale(range(-10 10)) ///
+    ylabel(-10(5)10) xlabel(-10(5)10) ///
+    xtitle("Predicted growth rate (%)") ///
+    ytitle("Actual growth rate (%)")
+graph export "$graphs/04-backtest/pred-avg-bot50-2y.pdf", replace
     
 // Bottom 50%
 gr tw (line chgref1_share99 chgref1_share99 if bracket == "bot50" & income == "princ" & unit == "equal-split" & !tax_reform, col(black) lw(medthick)) ///
@@ -554,7 +573,7 @@ forvalues lag = 1/2 {
             all_sd_fc_err notax_correct_sign notax_fc_rmse notax_mean_fc_err ///
             notax_sd_fc_err recession_correct_sign recession_fc_rmse ///
             recession_mean_fc_err recession_sd_fc_err ///
-        using "$graphs/04-backtest/backtest-table-avg-`lag'y.tex", replace ///
+        using "$tables/04-backtest/backtest-table-avg-`lag'y.tex", replace ///
         delimiter(" & ") ///
         vend(vend) ///
         headlines("\begin{tabular}{llccccccccccccc}" "\toprule" ///

@@ -118,9 +118,26 @@ label define year_lbl 2017 `"2017"', add
 label define year_lbl 2018 `"2018"', add
 label define year_lbl 2019 `"2019"', add
 label define year_lbl 2020 `"2020"', add
+label define year_lbl 2021 `"2021"', add
+label define year_lbl 2022 `"2022"', add
+label define year_lbl 2023 `"2023"', add
 label values year year_lbl
 
-label define sample_lbl 202001 `"2020 ACS"'
+label define sample_lbl 202304 `"2019-2023, PRCS 5-year"'
+label define sample_lbl 202303 `"2019-2023, ACS 5-year"', add
+label define sample_lbl 202302 `"2023 PRCS"', add
+label define sample_lbl 202301 `"2023 ACS"', add
+label define sample_lbl 202204 `"2018-2022, PRCS 5-year"', add
+label define sample_lbl 202203 `"2018-2022, ACS 5-year"', add
+label define sample_lbl 202202 `"2022 PRCS"', add
+label define sample_lbl 202201 `"2022 ACS"', add
+label define sample_lbl 202104 `"2017-2021, PRCS 5-year"', add
+label define sample_lbl 202103 `"2017-2021, ACS 5-year"', add
+label define sample_lbl 202102 `"2021 PRCS"', add
+label define sample_lbl 202101 `"2021 ACS"', add
+label define sample_lbl 202004 `"2016-2020, PRCS 5-year"', add
+label define sample_lbl 202003 `"2016-2020, ACS 5-year"', add
+label define sample_lbl 202001 `"2020 ACS"', add
 label define sample_lbl 201904 `"2015-2019, PRCS 5-year"', add
 label define sample_lbl 201903 `"2015-2019, ACS 5-year"', add
 label define sample_lbl 201902 `"2019 PRCS"', add
@@ -226,6 +243,7 @@ label define sample_lbl 197002 `"1970 Form 2 State"', add
 label define sample_lbl 197001 `"1970 Form 1 State"', add
 label define sample_lbl 196002 `"1960 5%"', add
 label define sample_lbl 196001 `"1960 1%"', add
+label define sample_lbl 195002 `"1950 100% database"', add
 label define sample_lbl 195001 `"1950 1%"', add
 label define sample_lbl 194002 `"1940 100% database"', add
 label define sample_lbl 194001 `"1940 1%"', add
@@ -375,6 +393,7 @@ label values gqtyped gqtyped_lbl
 
 label define sex_lbl 1 `"Male"'
 label define sex_lbl 2 `"Female"', add
+label define sex_lbl 9 `"Missing/blank"', add
 label values sex sex_lbl
 
 label define age_lbl 000 `"Less than 1 year old"'
@@ -504,13 +523,21 @@ label define age_lbl 123 `"123"', add
 label define age_lbl 124 `"124"', add
 label define age_lbl 125 `"125"', add
 label define age_lbl 126 `"126"', add
+label define age_lbl 127 `"127"', add
+label define age_lbl 128 `"128"', add
 label define age_lbl 129 `"129"', add
 label define age_lbl 130 `"130"', add
+label define age_lbl 131 `"131"', add
+label define age_lbl 132 `"132"', add
+label define age_lbl 133 `"133"', add
+label define age_lbl 134 `"134"', add
 label define age_lbl 135 `"135"', add
+label define age_lbl 140 `"140"', add
+label define age_lbl 999 `"Missing"', add
 label values age age_lbl
 
 label define race_lbl 1 `"White"'
-label define race_lbl 2 `"Black/African American/Negro"', add
+label define race_lbl 2 `"Black/African American"', add
 label define race_lbl 3 `"American Indian or Alaska Native"', add
 label define race_lbl 4 `"Chinese"', add
 label define race_lbl 5 `"Japanese"', add
@@ -526,7 +553,7 @@ label define raced_lbl 120 `"Blank (white) (1850)"', add
 label define raced_lbl 130 `"Portuguese"', add
 label define raced_lbl 140 `"Mexican (1930)"', add
 label define raced_lbl 150 `"Puerto Rican (1910 Hawaii)"', add
-label define raced_lbl 200 `"Black/African American/Negro"', add
+label define raced_lbl 200 `"Black/African American"', add
 label define raced_lbl 210 `"Mulatto"', add
 label define raced_lbl 300 `"American Indian/Alaska Native"', add
 label define raced_lbl 302 `"Apache"', add
@@ -557,6 +584,12 @@ label define raced_lbl 326 `"All other tribes (1990)"', add
 label define raced_lbl 328 `"Hopi"', add
 label define raced_lbl 329 `"Central American Indian"', add
 label define raced_lbl 330 `"Spanish American Indian"', add
+label define raced_lbl 340 `"Aztec"', add
+label define raced_lbl 341 `"Inca"', add
+label define raced_lbl 342 `"Maya"', add
+label define raced_lbl 343 `"Mixtec"', add
+label define raced_lbl 344 `"Taino"', add
+label define raced_lbl 345 `"Tarasco (Purepecha)"', add
 label define raced_lbl 350 `"Delaware"', add
 label define raced_lbl 351 `"Latin American Indian"', add
 label define raced_lbl 352 `"Puget Sound Salish"', add
@@ -570,6 +603,8 @@ label define raced_lbl 359 `"South American Indian"', add
 label define raced_lbl 360 `"Mexican American Indian"', add
 label define raced_lbl 361 `"Other Amer. Indian tribe (2000,ACS)"', add
 label define raced_lbl 362 `"2+ Amer. Indian tribes (2000,ACS)"', add
+label define raced_lbl 363 `"American Indian alone, not specified"', add
+label define raced_lbl 364 `"All other Latin American Indian alone"', add
 label define raced_lbl 370 `"Alaskan Athabaskan"', add
 label define raced_lbl 371 `"Aleut"', add
 label define raced_lbl 372 `"Eskimo"', add
@@ -577,6 +612,8 @@ label define raced_lbl 373 `"Alaskan mixed"', add
 label define raced_lbl 374 `"Inupiat"', add
 label define raced_lbl 375 `"Yup'ik"', add
 label define raced_lbl 379 `"Other Alaska Native tribe(s) (2000,ACS)"', add
+label define raced_lbl 380 `"Alaska Native alone, not specified"', add
+label define raced_lbl 381 `"Alaska Native tribes and villages alone"', add
 label define raced_lbl 398 `"Both Am. Ind. and Alaska Native (2000,ACS)"', add
 label define raced_lbl 399 `"Tribe not specified"', add
 label define raced_lbl 400 `"Chinese"', add
@@ -598,6 +635,10 @@ label define raced_lbl 650 `"Other Asian or Pacific Islander (1920,1980)"', add
 label define raced_lbl 651 `"Asian only (CPS)"', add
 label define raced_lbl 652 `"Pacific Islander only (CPS)"', add
 label define raced_lbl 653 `"Asian or Pacific Islander, n.s. (1990 Internal Census files)"', add
+label define raced_lbl 656 `"Mien"', add
+label define raced_lbl 657 `"Sikh"', add
+label define raced_lbl 658 `"Kazakh"', add
+label define raced_lbl 659 `"Uzbek"', add
 label define raced_lbl 660 `"Cambodian"', add
 label define raced_lbl 661 `"Hmong"', add
 label define raced_lbl 662 `"Laotian"', add
@@ -623,14 +664,17 @@ label define raced_lbl 681 `"Tahitian"', add
 label define raced_lbl 682 `"Tongan"', add
 label define raced_lbl 683 `"Other Polynesian (1990)"', add
 label define raced_lbl 684 `"1+ other Polynesian races (2000,ACS)"', add
-label define raced_lbl 685 `"Guamanian/Chamorro"', add
+label define raced_lbl 685 `"Chamorro"', add
 label define raced_lbl 686 `"Northern Mariana Islander"', add
 label define raced_lbl 687 `"Palauan"', add
 label define raced_lbl 688 `"Other Micronesian (1990)"', add
 label define raced_lbl 689 `"1+ other Micronesian races (2000,ACS)"', add
-label define raced_lbl 690 `"Fijian"', add
-label define raced_lbl 691 `"Other Melanesian (1990)"', add
-label define raced_lbl 692 `"1+ other Melanesian races (2000,ACS)"', add
+label define raced_lbl 690 `"Chuukese"', add
+label define raced_lbl 691 `"Guamanian"', add
+label define raced_lbl 692 `"Marshallese"', add
+label define raced_lbl 695 `"Fijian"', add
+label define raced_lbl 696 `"Other Melanesian (1990)"', add
+label define raced_lbl 697 `"1+ other Melanesian races (2000,ACS)"', add
 label define raced_lbl 698 `"2+ PI races from 2+ PI regions"', add
 label define raced_lbl 699 `"Pacific Islander, n.s."', add
 label define raced_lbl 700 `"Other race, n.e.c."', add
@@ -649,7 +693,7 @@ label define raced_lbl 819 `"White and two or more Asian groups"', add
 label define raced_lbl 820 `"White and PI"', add
 label define raced_lbl 821 `"White and Native Hawaiian"', add
 label define raced_lbl 822 `"White and Samoan"', add
-label define raced_lbl 823 `"White and Guamanian"', add
+label define raced_lbl 823 `"White and Chamorro"', add
 label define raced_lbl 824 `"White and PI write_in"', add
 label define raced_lbl 825 `"White and other PI race(s)"', add
 label define raced_lbl 826 `"White and other race write_in"', add
@@ -717,12 +761,15 @@ label define raced_lbl 921 `"White, Filipino, other race write_in (2000 1%)"', a
 label define raced_lbl 922 `"White, Asian write_in, other race write_in (2000 1%)"', add
 label define raced_lbl 923 `"Other White, Asian race(s), other race write_in (2000 1%)"', add
 label define raced_lbl 925 `"White, PI, other race write_in"', add
+label define raced_lbl 926 `"White and Japanese and Native Hawaiian and Pacific Islander"', add
+label define raced_lbl 927 `"White and Asian and Native Hawaiian and Pacific Islander"', add
 label define raced_lbl 930 `"Black, AIAN, Asian"', add
 label define raced_lbl 931 `"Black, AIAN, PI"', add
 label define raced_lbl 932 `"Black, AIAN, other race write_in"', add
 label define raced_lbl 933 `"Black, Asian, PI"', add
 label define raced_lbl 934 `"Black, Asian, other race write_in"', add
 label define raced_lbl 935 `"Black, PI, other race write_in"', add
+label define raced_lbl 936 `"Black and Native Hawaiian and Other Pacific Islander"', add
 label define raced_lbl 940 `"AIAN, Asian, PI"', add
 label define raced_lbl 941 `"AIAN, Asian, other race write_in"', add
 label define raced_lbl 942 `"AIAN, PI, other race write_in"', add
@@ -758,6 +805,7 @@ label define raced_lbl 989 `"4 or 5 races (CPS)"', add
 label define raced_lbl 990 `"White, Black, AIAN, Asian, PI, other race write_in"', add
 label define raced_lbl 991 `"White race; Some other race; Black or African American race and/or American Indian and Alaska Native race and/or Asian groups and/or Native Hawaiian and Other Pacific Islander groups"', add
 label define raced_lbl 996 `"2+ races, n.e.c. (CPS)"', add
+label define raced_lbl 997 `"Unknown"', add
 label values raced raced_lbl
 
 label define hispan_lbl 0 `"Not Hispanic"'
@@ -837,6 +885,7 @@ label define educ_lbl 08 `"2 years of college"', add
 label define educ_lbl 09 `"3 years of college"', add
 label define educ_lbl 10 `"4 years of college"', add
 label define educ_lbl 11 `"5+ years of college"', add
+label define educ_lbl 99 `"Missing"', add
 label values educ educ_lbl
 
 label define educd_lbl 000 `"N/A or no schooling"'
@@ -889,6 +938,7 @@ label define empstat_lbl 0 `"N/A"'
 label define empstat_lbl 1 `"Employed"', add
 label define empstat_lbl 2 `"Unemployed"', add
 label define empstat_lbl 3 `"Not in labor force"', add
+label define empstat_lbl 9 `"Unknown/Illegible"', add
 label values empstat empstat_lbl
 
 label define empstatd_lbl 00 `"N/A"'
@@ -906,7 +956,129 @@ label define empstatd_lbl 31 `"NILF, housework"', add
 label define empstatd_lbl 32 `"NILF, unable to work"', add
 label define empstatd_lbl 33 `"NILF, school"', add
 label define empstatd_lbl 34 `"NILF, other"', add
+label define empstatd_lbl 99 `"Unknown/Illegible"', add
 label values empstatd empstatd_lbl
+
+label define incwage_lbl 000000 `"000000"'
+label define incwage_lbl 000100 `"000100"', add
+label define incwage_lbl 000200 `"000200"', add
+label define incwage_lbl 000300 `"000300"', add
+label define incwage_lbl 000400 `"000400"', add
+label define incwage_lbl 000500 `"000500"', add
+label define incwage_lbl 000600 `"000600"', add
+label define incwage_lbl 000700 `"000700"', add
+label define incwage_lbl 000800 `"000800"', add
+label define incwage_lbl 000900 `"000900"', add
+label define incwage_lbl 001000 `"001000"', add
+label define incwage_lbl 001100 `"001100"', add
+label define incwage_lbl 001200 `"001200"', add
+label define incwage_lbl 001300 `"001300"', add
+label define incwage_lbl 001400 `"001400"', add
+label define incwage_lbl 001500 `"001500"', add
+label define incwage_lbl 001600 `"001600"', add
+label define incwage_lbl 001700 `"001700"', add
+label define incwage_lbl 001800 `"001800"', add
+label define incwage_lbl 001900 `"001900"', add
+label define incwage_lbl 002000 `"002000"', add
+label define incwage_lbl 002100 `"002100"', add
+label define incwage_lbl 002200 `"002200"', add
+label define incwage_lbl 002300 `"002300"', add
+label define incwage_lbl 002400 `"002400"', add
+label define incwage_lbl 002500 `"002500"', add
+label define incwage_lbl 002600 `"002600"', add
+label define incwage_lbl 002700 `"002700"', add
+label define incwage_lbl 002800 `"002800"', add
+label define incwage_lbl 002900 `"002900"', add
+label define incwage_lbl 003000 `"003000"', add
+label define incwage_lbl 003100 `"003100"', add
+label define incwage_lbl 003200 `"003200"', add
+label define incwage_lbl 003300 `"003300"', add
+label define incwage_lbl 003400 `"003400"', add
+label define incwage_lbl 003500 `"003500"', add
+label define incwage_lbl 003600 `"003600"', add
+label define incwage_lbl 003700 `"003700"', add
+label define incwage_lbl 003800 `"003800"', add
+label define incwage_lbl 003900 `"003900"', add
+label define incwage_lbl 004000 `"004000"', add
+label define incwage_lbl 004100 `"004100"', add
+label define incwage_lbl 004200 `"004200"', add
+label define incwage_lbl 004300 `"004300"', add
+label define incwage_lbl 004400 `"004400"', add
+label define incwage_lbl 004500 `"004500"', add
+label define incwage_lbl 004600 `"004600"', add
+label define incwage_lbl 004700 `"004700"', add
+label define incwage_lbl 004800 `"004800"', add
+label define incwage_lbl 004900 `"004900"', add
+label define incwage_lbl 005000 `"005000"', add
+label define incwage_lbl 005100 `"005100"', add
+label define incwage_lbl 005200 `"005200"', add
+label define incwage_lbl 005300 `"005300"', add
+label define incwage_lbl 005400 `"005400"', add
+label define incwage_lbl 005500 `"005500"', add
+label define incwage_lbl 005600 `"005600"', add
+label define incwage_lbl 005700 `"005700"', add
+label define incwage_lbl 005800 `"005800"', add
+label define incwage_lbl 005900 `"005900"', add
+label define incwage_lbl 006000 `"006000"', add
+label define incwage_lbl 006100 `"006100"', add
+label define incwage_lbl 006200 `"006200"', add
+label define incwage_lbl 006300 `"006300"', add
+label define incwage_lbl 006400 `"006400"', add
+label define incwage_lbl 006500 `"006500"', add
+label define incwage_lbl 006600 `"006600"', add
+label define incwage_lbl 006700 `"006700"', add
+label define incwage_lbl 006800 `"006800"', add
+label define incwage_lbl 006900 `"006900"', add
+label define incwage_lbl 007000 `"007000"', add
+label define incwage_lbl 007100 `"007100"', add
+label define incwage_lbl 007200 `"007200"', add
+label define incwage_lbl 007300 `"007300"', add
+label define incwage_lbl 007400 `"007400"', add
+label define incwage_lbl 007500 `"007500"', add
+label define incwage_lbl 007600 `"007600"', add
+label define incwage_lbl 007700 `"007700"', add
+label define incwage_lbl 007800 `"007800"', add
+label define incwage_lbl 007900 `"007900"', add
+label define incwage_lbl 008000 `"008000"', add
+label define incwage_lbl 008100 `"008100"', add
+label define incwage_lbl 008200 `"008200"', add
+label define incwage_lbl 008300 `"008300"', add
+label define incwage_lbl 008400 `"008400"', add
+label define incwage_lbl 008500 `"008500"', add
+label define incwage_lbl 008600 `"008600"', add
+label define incwage_lbl 008700 `"008700"', add
+label define incwage_lbl 008800 `"008800"', add
+label define incwage_lbl 008900 `"008900"', add
+label define incwage_lbl 009000 `"009000"', add
+label define incwage_lbl 009100 `"009100"', add
+label define incwage_lbl 009200 `"009200"', add
+label define incwage_lbl 009300 `"009300"', add
+label define incwage_lbl 009400 `"009400"', add
+label define incwage_lbl 009500 `"009500"', add
+label define incwage_lbl 009600 `"009600"', add
+label define incwage_lbl 009700 `"009700"', add
+label define incwage_lbl 009800 `"009800"', add
+label define incwage_lbl 009900 `"009900"', add
+label define incwage_lbl 010000 `"010000"', add
+label define incwage_lbl 999998 `"Missing"', add
+label define incwage_lbl 999999 `"N/A"', add
+label values incwage incwage_lbl
+
+label define incbus00_lbl 999999 `"NIU"'
+label define incbus00_lbl 999998 `"$1 or break even (2000, 2005-2007 ACS)"', add
+label values incbus00 incbus00_lbl
+
+label define incwelfr_lbl 99999 `"NIU"'
+label define incwelfr_lbl 99998 `"99998"', add
+label define incwelfr_lbl 00000 `"00000"', add
+label values incwelfr incwelfr_lbl
+
+label define incinvst_lbl 999999 `"N/A"'
+label define incinvst_lbl 999998 `"999998"', add
+label values incinvst incinvst_lbl
+
+label define incretir_lbl 999999 `"NIU"'
+label values incretir incretir_lbl
 
 // -------------------------------------------------------------------------- //
 // Clean up and recode to be compatible with CPS
@@ -917,6 +1089,9 @@ drop if inrange(year, 2001, 2005)
 
 // Keep only people 20+
 keep if age >= 20
+
+// Keep only group quarters population (exclude regular households)
+keep if gq >= 3
 
 // Income variables
 generate cps_wage  = incwage
@@ -962,37 +1137,54 @@ label drop _all
 // -------------------------------------------------------------------------- //
 
 generate is_original = 1
-foreach year of numlist 1976/2019 {
+
+local last_year_acs = 2024
+
+local upper = $last_year_dina + 1  // We need data up to $last_dina_year, and income in ACS is for the year T-1.
+foreach year of numlist 1976/`upper' {
+	
     count if year == `year' & is_original
     if (r(N) == 0) {
+		
         summarize year if year < `year' & is_original, meanonly
         local year_below = r(max)
         
         summarize year if year > `year' & is_original, meanonly
         local year_above = r(min)
         
-        expand 2 if year == `year_below', gen(copy_below)
-        expand 2 if year == `year_above', gen(copy_above)
-        
-        local mix_prop = (`year' - `year_below')/(`year_above' - `year_below')
-        
-        replace weight = weight*(1 - `mix_prop') if copy_below
-        replace weight = weight*`mix_prop' if copy_above
-        
-        // New ID
-        gegen new_serial = group(year sample serial) if copy_below | copy_above
-        replace serial = new_serial if copy_below | copy_above
-        
+        if (`year' <= `last_year_acs') & (`year' >= 1980) { // Interpolation
+			expand 2 if year == `year_below', gen(copy_below)
+			expand 2 if year == `year_above', gen(copy_above)
+			
+			local mix_prop = (`year' - `year_below')/(`year_above' - `year_below')
+			
+			replace weight = weight*(1 - `mix_prop') if copy_below
+			replace weight = weight*`mix_prop' if copy_above
+		
+        }
+		
+		else if (`year' < 1980) { // Left extrapolation
+		    expand 2 if year == `year_above', gen(copy_above)
+			gen copy_below = 0	
+		}
+
+		else { // Right extrapolation
+			di `year' 
+			expand 2 if year == `year_below', gen(copy_below)
+            gen copy_above = 0
+        }
+
         replace year = `year' if copy_below | copy_above
         replace is_original = 0 if copy_below | copy_above
+		
+        gegen new_serial = group(year sample serial) if copy_below | copy_above
+        replace serial = new_serial if copy_below | copy_above
         
         drop copy_below copy_above new_serial
     }
 }
-expand 2 if year == 2019, gen(is2020)
-replace year = 2020 if is2020
-drop is2020
-keep if inrange(year, 1976, 2020)
+
+keep if inrange(year, 1976, $last_year_dina + 1)
 
 drop is_original
 

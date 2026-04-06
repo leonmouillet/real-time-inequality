@@ -6,6 +6,9 @@ if (!require("pacman")) {
     install.packages("pacman")
 }
 library(pacman)
+
+#install.packages("devtools", repos = "https://cloud.r-project.org")
+#devtools::install_github("world-inequality-database/gpinter")
 library(gpinter)
 
 p_load(dplyr)
@@ -19,7 +22,13 @@ p_load(haven)
 p_load(ggplot2)
 p_load(FNN)
 
+first_year_ssa <- 1991
+last_year_ssa  <- 2023
+
 work_dir <- commandArgs(trailingOnly = TRUE)
+if (length(work_dir) == 0) {
+    work_dir <- "./work-data"
+}
 
 # ---------------------------------------------------------------------------- #
 # Import SSA tabulations. Pre-1991, use IRS to extrapolate SSA.
@@ -31,7 +40,7 @@ gperc <- c(
 )
 
 dina_micro <- read_dta(file.path(work_dir, "01-import-dina", "dina-full.dta"))
-ssa_tables <- read_dta(file.path(work_dir, "01-import-ssa-wages", "ssa-tables.dta"))
+ssa_tables <- read_dta(file.path(work_dir, "01-import-ssa", "ssa-tables.dta"))
 ssa_employment <- read_dta(file.path(work_dir, "02-prepare-bls-employment", "ssa-bls-employment-yearly.dta"))
 
 gperc <- c(
@@ -71,13 +80,20 @@ dina_ssa_tabul <- full_join(dina_micro_tabul, ssa_tables_inter) %>%
     mutate(a_dina = a_dina/weighted.mean(a_dina, n)) %>%
     mutate(a_ssa = a_ssa/weighted.mean(a_ssa, n))
 
-dina_ssa_adj <- dina_ssa_tabul %>%
+dina_ssa_adj_historical <- dina_ssa_tabul %>%
     mutate(ratio_ssa_dina = a_ssa/a_dina) %>%
+    filter(year <= first_year_ssa + 9) %>%
+    group_by(p) %>%
+    summarise(ratio_ssa_dina = median(ratio_ssa_dina, na.rm = TRUE))
+
+dina_ssa_adj_recent <- dina_ssa_tabul %>%
+    mutate(ratio_ssa_dina = a_ssa/a_dina) %>%
+    filter(year >= last_year_ssa - 1) %>%
     group_by(p) %>%
     summarise(ratio_ssa_dina = median(ratio_ssa_dina, na.rm = TRUE))
 
 dina_ssa_tabul <- dina_ssa_tabul %>%
-    left_join(dina_ssa_adj) %>%
+    left_join(dina_ssa_adj_historical, by = "p") %>%
     group_by(year) %>%
     mutate(a_ssa_extra = a_dina*ratio_ssa_dina) %>%
     mutate(s_ssa = a_ssa*n/weighted.mean(a_ssa, n)/1e5) %>%
@@ -90,30 +106,32 @@ dina_ssa_tabul <- dina_ssa_tabul %>%
 ssa_tables_extra <- bind_rows(
     ssa_tables,
     dina_ssa_tabul %>%
-        filter(year < 1991) %>%
-        inner_join(ssa_employment) %>%
+        filter(year < first_year_ssa) %>%
+        inner_join(ssa_employment, by = "year") %>%
         group_by(year) %>%
         arrange(year, p) %>%
-        transmute(
-            year,
-            thr = NA_real_,
-            pop = ssa_employed*n/1e5,
-            cum_pop = cumsum(pop),
-            cum_pct = cum_pop/sum(pop),
-            total = a_ssa_extra*pop,
-            avg = a_ssa_extra
-        )
+        transmute(year, thr = NA_real_, pop = ssa_employed*n/1e5,
+                  cum_pop = cumsum(pop), cum_pct = cum_pop/sum(pop),
+                  total = a_ssa_extra*pop, avg = a_ssa_extra),
+    dina_ssa_tabul %>%
+        filter(year > last_year_ssa) %>%
+        left_join(dina_ssa_adj_recent, by = "p", suffix = c("_hist", "_recent")) %>%
+        mutate(a_ssa_extra_recent = a_dina*ratio_ssa_dina_recent) %>%
+        inner_join(ssa_employment, by = "year") %>%
+        group_by(year) %>%
+        arrange(year, p) %>%
+        transmute(year, thr = NA_real_, pop = ssa_employed*n/1e5,
+                  cum_pop = cumsum(pop), cum_pct = cum_pop/sum(pop),
+                  total = a_ssa_extra_recent*pop, avg = a_ssa_extra_recent)
 )
 
 # ---------------------------------------------------------------------------- #
 # Create the SSA wage variable in the microfiles
 # ---------------------------------------------------------------------------- #
 
-# Add the year 2020
-dina_micro <- bind_rows(dina_micro, dina_micro %>% filter(year == 2019) %>%  mutate(year = 2020))
 
 dina_micro <- dina_micro %>%
-    filter(year >= 1975) %>%
+    filter(year >= 1962) %>%
     group_by(year) %>%
     group_split() %>%
     map_dfr(~ {
@@ -238,4 +256,10 @@ top_shares <- function(y, weights = NULL, p, rank_by = NULL) {
     }))
 }
 
+dina_ssa_tabul %>%
+    mutate(ratio_ssa_dina = a_ssa/a_dina) %>%
+    select(year, p, a_dina, a_ssa, ratio_ssa_dina) %>%
+    write_dta(file.path(work_dir, "02-add-ssa-wages", "dina-ssa-ratios.dta"))
+
 write_dta(dina_micro, file.path(work_dir, "02-add-ssa-wages", "dina-ssa-full.dta"))
+write_dta(dina_micro %>% select(year, id, ends_with("_ssa")), file.path(work_dir, "02-add-ssa-wages", "dina-ssa-only.dta"))

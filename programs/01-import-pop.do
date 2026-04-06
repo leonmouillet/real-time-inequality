@@ -2,11 +2,13 @@
 // Import population data from the Census Bureau
 // -------------------------------------------------------------------------- //
 
-copy "https://seer.cancer.gov/popdata/yr1969_2020.19ages/us.1969_2020.19ages.adjusted.txt.gz" ///
+cap erase "$work/01-import-pop/pop-data.txt.gz"
+copy "https://seer.cancer.gov/popdata/yr1969_2023.20ages/us.1969_2023.20ages.adjusted.txt.gz" ///
     "$work/01-import-pop/pop-data.txt.gz"
 cd "$work/01-import-pop"
 cap erase "$work/01-import-pop/pop-data.txt"
-shell gunzip "pop-data.txt.gz"
+*shell gunzip "pop-data.txt.gz"
+shell "$rscript" -e "if(!require('R.utils')) install.packages('R.utils', repos='https://cloud.r-project.org'); R.utils::gunzip('pop-data.txt.gz', remove=FALSE)"
 
 // -------------------------------------------------------------------------- //
 // Import the data

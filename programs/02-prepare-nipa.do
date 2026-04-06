@@ -123,7 +123,7 @@ drop discr
 // Create a personal net interest variable (to disaggregate the quarterly 'net interest')
 generate a064rc_b069rc = a064rc - b069rc
 
-// Create a variable "population times price level" to serve a default in
+// Create a variable "population times price level" to serve as a default in
 // disaggration procedure
 generate concap = dpcerg*b230rc
 
@@ -254,6 +254,7 @@ replace to_keep = 1 if series_code == "w008rc"
 replace to_keep = 1 if series_code == "w323rc"
 replace to_keep = 1 if series_code == "w065rc"
 replace to_keep = 1 if series_code == "a453rc"
+replace to_keep = 1 if series_code == "na000265"
 keep if to_keep
 drop to_keep
 
@@ -300,8 +301,54 @@ merge 1:1 year quarter using "$work/01-import-aid-covid/covid-aid-quarterly.dta"
 replace covid_subsidies = 0 if missing(covid_subsidies)
 replace covid_ppp = 0 if missing(covid_ppp)
 
-// Extrapolate profits with GDP in last quarter if needed
+/*
+// -------------------------------------------------------------------------- //
+// Use direct estimate of corporate profits from compustat (external) +
+// previous corporate profits seasonality to estimate corporate profits
+// in recent quarters
+// -------------------------------------------------------------------------- //
+
+replace na000265 = 596.1e9 if yq(year, quarter) == yq(2023, 1)
+
+generate time = yq(year, quarter)
+tsset time, quarterly
+
+summarize time, meanonly
+local last_quarter = r(max)
+quietly count if !missing(a051rc) & time == `last_quarter'
+if (r(N) == 0) {
+    replace na000265 = 4*na000265
+
+    generate seas = log(a445rc) - log(na000265)
+    replace seas = (L4.seas + L8.seas)/2 if missing(seas)
+
+    // Extrapolate domestic corporate profits
+    replace a445rc = na000265*exp(seas) if time == `last_quarter'
+
+    // Predict national profits
+    generate ratio_a051rc = a051rc/a191rc
+    generate ratio_a445rc = a445rc/a191rc
+
+    reg ratio_a051rc ratio_a445rc if year >= 2005
+    predict pred_a051rc if year >= 2005
+
+    replace a051rc = pred_a051rc*a191rc if time == `last_quarter'
+    
+    // Split corporate tax
+    replace a054rc = a051rc*(L.a054rc/L.a051rc) if time == `last_quarter'
+    replace a551rc = a051rc*(L.a551rc/L.a051rc) if time == `last_quarter'
+    
+    tsset, clear
+    drop time seas ratio_a051rc ratio_a445rc pred_a051rc
+}
+*/
+
+
+// -------------------------------------------------------------------------- //
+// Extrapolate profits with GDP in last quarter
 // To that end: impute statistical discrepancy & foreign capital incomes
+// -------------------------------------------------------------------------- //
+
 generate time = yq(year, quarter)
 format time %tq
 tsset time, quarterly
@@ -314,23 +361,28 @@ replace a051rc = a032rc - (a033rc + a041rc + a048rc + w255rc + w056rc - a107rc +
 replace a054rc = a051rc*(L.a054rc/L.a051rc) if missing(a054rc)
 replace a551rc = a051rc*(L.a551rc/L.a051rc) if missing(a551rc)
 
+
+
 generate gdp_growth = 100*(((a191rc/a191rd)/(L.a191rc/L.a191rd))^4 - 1)
 generate gdi_growth = 100*(((a261rc/a191rd)/(L.a261rc/L.a191rd))^4 - 1)
 
 generate time_label = strofreal(year) + "Q" + strofreal(quarter)
 generate label_pos = 3
 replace label_pos = 5 if time_label == "2020Q2"
+replace label_pos = 9 if time_label == "2020Q3"
 replace label_pos = 3 if time_label == "2022Q1"
+replace label_pos = 9 if time_label == "2022Q2"
 replace label_pos = 2 if time_label == "2021Q4"
 replace label_pos = 10 if time_label == "2021Q2"
 replace label_pos = 3 if time_label == "2021Q3"
-replace label_pos = 4 if time_label == "2021Q1"
+replace label_pos = 9 if time_label == "2021Q1"
 
-gr tw (sc gdp_growth gdi_growth if year < 2020, col(ebblue)) ///
-    (sc gdp_growth gdi_growth if year >= 2020 & !inlist(time_label, "2020Q2"), col(cranberry) msym(T) mlabel(time_label) mlabvpos(label_pos) mlabcolor(cranberry)) ///
+gr tw (sc gdp_growth gdi_growth if year < 2020 | yq(year, quarter) > yq(2022, 2), col(ebblue)) ///
+    (sc gdp_growth gdi_growth if year >= 2020 & yq(year, quarter) <= yq(2022, 2) & !inlist(time_label, "2020Q2"), col(cranberry) msym(T) mlabel(time_label) mlabvpos(label_pos) mlabcolor(cranberry)) ///
     (line gdi_growth gdi_growth if inrange(gdi_growth, -10, 30), col(black)), aspectratio(1) scale(1.2) xsize(4) ysize(4) ///
     legend(off) xtitle("Quarterly GDI growth (annualized, %)") ytitle("Quarterly GDP growth (annualized, %)")
 graph export "$graphs/02-prepare-nipa/gdp-gdi-growth.pdf", replace
+
 
 // Remove COVID subsidies from subsidies
 replace a107rc = a107rc - covid_subsidies
@@ -396,8 +448,10 @@ foreach v of varlist `to_disaggregate_qtrly' {
     restore
 }
 
+// Save quarterly data
 tempfile nipa_quarterly
 save "`nipa_quarterly'", replace
+
 
 // -------------------------------------------------------------------------- //
 // Annual series
@@ -534,7 +588,7 @@ replace to_keep = 1 if series_code == "a1581c"
 replace to_keep = 1 if series_code == "con544"
 replace to_keep = 1 if series_code == "con170"
 replace to_keep = 1 if series_code == "con550"
-replace to_keep = 1 if series_code == "y672rc"
+//replace to_keep = 1 if series_code == "y672rc"
 replace to_keep = 1 if series_code == "b1606c"
 replace to_keep = 1 if series_code == "trp650"
 replace to_keep = 1 if series_code == "trp810"
@@ -544,11 +598,11 @@ replace to_keep = 1 if series_code == "b1034c"
 replace to_keep = 1 if series_code == "w166rc"
 replace to_keep = 1 if series_code == "b1439c"
 replace to_keep = 1 if series_code == "w159rc"
-replace to_keep = 1 if series_code == "w404rc"
+//replace to_keep = 1 if series_code == "w404rc"
 replace to_keep = 1 if series_code == "y240rc"
 replace to_keep = 1 if series_code == "b1612c"
 replace to_keep = 1 if series_code == "w499rc"
-replace to_keep = 1 if series_code == "w403rc"
+//replace to_keep = 1 if series_code == "w403rc"
 replace to_keep = 1 if series_code == "a085rc"
 replace to_keep = 1 if series_code == "y668rc"
 replace to_keep = 1 if series_code == "la000355"
@@ -578,9 +632,9 @@ tsset year, yearly
 // Variables to disaggregate
 local to_disaggregate_yrly ///
     l30605 l30622 y344rc y912rc y934rc y955rc y603rc ///
-    y604rc y605rc a2213c a1581c con544 con170 con550 y672rc ///
+    y604rc y605rc a2213c a1581c con544 con170 con550 /*y672rc*/ ///
     b1606c trp650 trp810 b1603c w812rc peninc contrib_ira_pretax w499rc ///
-    b1034c w166rc b1439c w159rc w404rc b1612c y240rc w403rc a085rc y668rc la000355
+    b1034c w166rc b1439c w159rc /*w404rc*/ b1612c y240rc /*w403rc*/ a085rc y668rc la000355
 
 // Define the variable to use for the disaggregation in each case:
 
@@ -592,7 +646,7 @@ local disag_y955rc "b040rc"
 local disag_y603rc "b040rc"
 local disag_y604rc "b040rc"
 local disag_y605rc "b040rc"
-local disag_y672rc "b040rc"
+//local disag_y672rc "b040rc"
 local disag_y240rc "b040rc"
 
 // Evolving like employer contribution to gov social insurance
@@ -620,10 +674,10 @@ local disag_b1034c "concap"
 local disag_w166rc "concap"
 local disag_b1439c "concap"
 local disag_w159rc "concap"
-local disag_w404rc "concap"
+//local disag_w404rc "concap"
 local disag_b1612c "concap"
 local disag_w499rc "concap"
-local disag_w403rc "concap"
+//local disag_w403rc "concap"
 local disag_a085rc "concap"
 local disag_y668rc "concap"
 local disag_la000355 "concap"
@@ -638,6 +692,7 @@ foreach v of varlist `to_disaggregate_yrly' {
     restore
 }
 
+// Save yearly data
 tempfile nipa_yearly
 save "`nipa_yearly'", replace
 
@@ -686,7 +741,7 @@ foreach v in `to_disaggregate_yrly' {
 
 // We anchor corporate profits in the current quarter to the consensus
 // prediction from <https://tradingeconomics.com/forecast/corporate-profits?continent=america>
-
+/*
 generate quarter = quarter(dofm(time_mthly))
 gegen quarterly_profits = mean(a551rc_mthly), by(year quarter)
 
@@ -694,6 +749,7 @@ replace a551rc_mthly = a551rc_mthly/quarterly_profits*2400e9 if time_mthly > ym(
 replace a054rc_mthly = a054rc_mthly/quarterly_profits*2400e9 if time_mthly > ym(2022, 3)
 
 drop quarter quarterly_profits
+*/
 
 // -------------------------------------------------------------------------- //
 // Simplified national income decompositions
@@ -723,7 +779,7 @@ generate nipa_corptax = a054rc_mthly // XX
 
 generate nipa_profits = a551rc_mthly /// Corporate profits XX
     - w065rc_mthly /// Dividends received by government 
-    - w404rc_mthly /// Dividends received by nonprofits XX
+    ///- w404rc_mthly /// Dividends received by nonprofits XX
     + w323rc_mthly /// Net corporate business transfers paid XX
     + y240rc_mthly /// Imputed interest paid by corporations on underfunded pension plans XX
     + 0.1*b1612c_mthly // Dividend receipts of life-insurance companies included under "imputed interest received from life-insurance carriers" XX
@@ -733,7 +789,7 @@ generate nipa_fkfix = w255rc_mthly /// Net interest and misc. XX
     - (a453rc_mthly - w499rc_mthly) /// Misc. corporate payments
     - y240rc_mthly /// Imputed interest paid by corporations on underfunded pension plans XX
     - 0.1*b1612c_mthly /// Dividend receipts of life-insurance companies included under "imputed interest received from life-insurance carriers" XX
-    - w403rc_mthly /// Interest received by nonprofits XX
+    ///- w403rc_mthly /// Interest received by nonprofits XX
     + a085rc_mthly - y668rc_mthly // Net interest paid by government, other than imputed for unfunded pension plans
     
 generate nipa_fknmo = b069rc // XX
@@ -750,9 +806,9 @@ generate nipa_govin = w065rc_mthly /// Dividends received by government
     + (a453rc_mthly - w499rc_mthly) /// Misc. corporate payments
     - (a085rc_mthly - y668rc_mthly) // Net interest paid by government, other than imputed for unfunded pension plans
     
-generate nipa_npinc = w403rc_mthly /// Interest received by nonprofits XX
-    + w404rc_mthly /// Dividends received by nonprofits XX
-    + w159rc_mthly // Tenant-occupied rental income of nonprofits XX
+generate nipa_npinc = ///w403rc_mthly /// Interest received by nonprofits XX
+    ///+ w404rc_mthly /// Dividends received by nonprofits XX
+    /*+*/ w159rc_mthly // Tenant-occupied rental income of nonprofits XX
 
 generate nipa_princ = nipa_flemp ///
     + nipa_proprietors ///
@@ -772,7 +828,7 @@ preserve
     gcollapse (mean) nipa_princ, by(year quarter)
     merge 1:1 year quarter using "`nipa_quarterly'", keepusing(a032rc) nogenerate keep(match)
     keep if !missing(nipa_princ) & !missing(a032rc)
-    assert reldif(nipa_princ, a032rc) < 1e-4 if yq(year, quarter) < yq(2022, 01)
+    assert reldif(nipa_princ, a032rc) < 1e-4 if yq(year, quarter) < yq(2022, 03)
 restore
 
 // Pretax income
@@ -807,7 +863,7 @@ preserve
     merge 1:1 year quarter using "`nipa_quarterly'", keepusing(a032rc) nogenerate keep(match)
     keep if !missing(nipa_peinc) & !missing(a032rc)
     gen discr = reldif(nipa_peinc, a032rc)
-    assert reldif(nipa_peinc, a032rc) < 1e-4 if yq(year, quarter) < yq(2022, 01)
+    assert reldif(nipa_peinc, a032rc) < 1e-4 if yq(year, quarter) < yq(2022, 03)
 restore
 
 // Disposable income
@@ -904,7 +960,7 @@ preserve
     merge 1:1 year quarter using "`nipa_quarterly'", keepusing(a032rc) nogenerate keep(match)
     keep if !missing(nipa_poinc) & !missing(a032rc)
     gen discr = reldif(nipa_poinc, a032rc)
-    assert reldif(nipa_poinc, a032rc) < 1e-4 if yq(year, quarter) < yq(2022, 01)
+    assert reldif(nipa_poinc, a032rc) < 1e-4 if yq(year, quarter) < yq(2022, 03)
 restore
     
 // Monthly population

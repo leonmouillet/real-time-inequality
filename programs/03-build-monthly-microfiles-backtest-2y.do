@@ -2,14 +2,14 @@
 // Generate monthly DINA files
 // -------------------------------------------------------------------------- //
 
-tempfile cps_changes
-
-global date_begin = ym(1976, 01)
-global date_end   = ym(2019, 12)
+local date_begin = ym(1976, 01)
+local date_end   = ym(2024, 12)
 
 set seed 19920902
 
-foreach t of numlist $date_begin / $date_end {
+tempfile cps_changes
+
+foreach t of numlist `date_begin' / `date_end' {
     
     local year = year(dofm(`t'))
     local month = month(dofm(`t'))
@@ -49,7 +49,7 @@ foreach t of numlist $date_begin / $date_end {
         generate employment_rate = ssa_employed_monthly/monthly_adult
         generate frac_ui = ui_claims/monthly_adult
         local employment_rate_target = employment_rate
-        loca frac_ui_target = frac_ui
+        local frac_ui_target = frac_ui
         
         // ------------------------------------------------------------------ //
         // Update DINA microfile
@@ -471,7 +471,7 @@ foreach t of numlist $date_begin / $date_end {
         save "$work/03-build-monthly-microfiles-backtest-2y/tabul-flemp-gpinter.dta", replace
         
         // Interpolate with gpinter
-        rsource using "$programs/03-interpolate-qcew.R", roptions(`" --vanilla --args "$work/03-build-monthly-microfiles-backtest-2y" "')
+        shell "$rscript" --vanilla "$programs/03-interpolate-qcew.R" "$work/03-build-monthly-microfiles-backtest-2y"
         
         // ------------------------------------------------------------------ //
         // Same for UI benefits
@@ -494,7 +494,7 @@ foreach t of numlist $date_begin / $date_end {
         save "$work/03-build-monthly-microfiles-backtest-2y/tabul-uiinc-gpinter.dta", replace
         
         // Interpolate with gpinter
-        rsource using "$programs/03-interpolate-uiinc.R", roptions(`" --vanilla --args "$work/03-build-monthly-microfiles-backtest-2y" "')
+        shell "$rscript" --vanilla "$programs/03-interpolate-uiinc.R" "$work/03-build-monthly-microfiles-backtest-2y"
         
         // ------------------------------------------------------------------ //
         // Incorporate wages and UI benefits into the main file

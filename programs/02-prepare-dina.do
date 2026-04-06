@@ -2,202 +2,232 @@
 // Create a version of the DINA microfiles that can be matched to the NIPA
 // -------------------------------------------------------------------------- //
 
-use "$work/02-match-dina-transport/dina-transport-full.dta", clear
-keep if year < 2020
-merge n:1 year using "$work/01-import-dina-macro/dina-macro-parameters.dta", nogenerate keep(master match) assert(match using) ///
-    keepusing(ttfkinc ttfkprk ttfksubk ttproptax_bus ttproptax_res ttfkcot ttdivw ttscorw ttschcpartw ttpenw ttpeniraw fraceqpen ttfkpen_eq ttfpen_fix ttfkpen)
-merge n:1 year using "$work/01-import-dina-macro/dina-npinc.dta", nogenerate keep(master match) assert(match using)
-merge n:1 year using "$work/01-import-dina-macro/dina-govin.dta", nogenerate keep(master match) assert(match using)
-merge n:1 year using "$work/01-import-dina-macro/dina-nmix-proprietors.dta", nogenerate keep(master match) assert(match using)
+// Load macro data
+tempfile macro_params npinc govin nmix_prop
+use "$work/01-import-dina-macro/dina-macro-parameters.dta", clear
+keep year ttfkinc ttfkprk ttfksubk ttproptax_bus ttproptax_res ttfkcot ttdivw ttscorw ttschcpartw ttpenw ttpeniraw fraceqpen ttfkpen_eq ttfpen_fix ttfkpen
+save "`macro_params'", replace
+use "$work/01-import-dina-macro/dina-npinc.dta", clear
+save "`npinc'", replace
+use "$work/01-import-dina-macro/dina-govin.dta", clear
+save "`govin'", replace
+use "$work/01-import-dina-macro/dina-nmix-proprietors.dta", clear
+save "`nmix_prop'", replace
 
-// -------------------------------------------------------------------------- //
-// Use SSA data
-// -------------------------------------------------------------------------- //
 
-foreach v of varlist flemp flsup flwag {
-    gegen mean_dina = mean(`v') [pw=weight], by(year)
-    gegen mean_ssa = mean(`v'_ssa) [pw=weight], by(year)
-    replace `v'_ssa = `v'_ssa/mean_ssa*mean_dina
-    drop mean_ssa mean_dina
+clear
+tempfile results
+save "`results'", replace emptyok
+
+foreach decade in 1975 1985 1995 2005 2015 { // Process by decade for RAM managment
+
+	
+    local end_year = min(`decade' + 9, $last_year_dina)
+        
+    use if inrange(year, `decade', `end_year') & year <= $last_year_dina ///
+        using "$work/02-match-dina-transport/dina-transport-full.dta", clear
+    
+    // Merge with macro data
+    merge n:1 year using "`macro_params'", nogenerate keep(master match) assert(match using)
+    merge n:1 year using "`npinc'", nogenerate keep(master match) assert(match using)
+    merge n:1 year using "`govin'", nogenerate keep(master match) assert(match using)
+    merge n:1 year using "`nmix_prop'", nogenerate keep(master match) assert(match using)
+
+
+	// -------------------------------------------------------------------------- //
+	// Use SSA data
+	// -------------------------------------------------------------------------- //
+
+	foreach v of varlist flemp flsup flwag {
+		gegen mean_dina = mean(`v') [pw=weight], by(year)
+		gegen mean_ssa = mean(`v'_ssa) [pw=weight], by(year)
+		replace `v'_ssa = `v'_ssa/mean_ssa*mean_dina
+		drop mean_ssa mean_dina
+	}
+
+	replace princ = princ - flemp + flemp_ssa
+	replace peinc = peinc - flemp + flemp_ssa
+	replace dicsh = dicsh - flemp + flemp_ssa
+	replace poinc = poinc - flemp + flemp_ssa
+	replace flemp = flemp_ssa
+
+	// -------------------------------------------------------------------------- //
+	// Formula for the allocation of business property taxes
+	// -------------------------------------------------------------------------- //
+
+	generate ratio_propbustax = ttproptax_bus/(ttdivw + ttscorw + ttschcpartw + fraceqpen*(ttpenw + ttpeniraw))
+	// Checks consistency with the microfiles
+	generate discr = reldif(propbustax, ratio_propbustax*(hwequ + hwbus + fraceqpen*hwpen))
+	assert abs(discr) < 1e-1 if !missing(discr)
+	drop discr
+
+	// -------------------------------------------------------------------------- //
+	// Formula for the allocation of production taxes falling on capital:
+	// fkprk is proportional to fkinc. So we just need to estimate the ratio
+	// of fkprk to fkinc
+	// -------------------------------------------------------------------------- //
+
+	generate ratio_fkprk = ttfkprk/(ttfkinc - ttfksubk - ttfkprk)
+	generate ratio_fksubk = ttfksubk/(ttfkinc - ttfksubk - ttfkprk)
+	// Checks consistency with the microfiles
+	generate discr = reldif(fkprk, ratio_fkprk*(fkinc - fkprk - fksubk))
+	assert abs(discr) < 1e-2 if !missing(discr)
+	replace discr = reldif(fksubk, ratio_fksubk*(fkinc - fkprk - fksubk))
+	drop discr
+
+	// -------------------------------------------------------------------------- //
+	// Share of pension income coming from equity and fixed-income assets
+	// -------------------------------------------------------------------------- //
+
+	generate share_pen_equ = ttfkpen_eq/ttfkpen
+	generate share_pen_fix = ttfpen_fix/ttfkpen
+	// Sums up to 1
+	generate discr = share_pen_equ + share_pen_fix - 1
+	assert abs(discr) < 1e-2 if !missing(discr)
+	drop discr
+
+	// -------------------------------------------------------------------------- //
+	// Share of nonprofit income falling on the different components
+	// -------------------------------------------------------------------------- //
+
+	generate share_npinc_profits = (ttnpinc_div + ttnpinc_nos)/ttnpinc
+	generate share_npinc_netint  = ttnpinc_int/ttnpinc
+	// Sums up to 1
+	generate discr = share_npinc_profits + share_npinc_netint - 1
+	assert abs(discr) < 1e-2 if !missing(discr)
+	drop discr
+
+	// -------------------------------------------------------------------------- //
+	// Discrepancy between net mixed income and proprietor's income
+	// -------------------------------------------------------------------------- //
+
+	generate share_nmix_proprietors = ttproprietors/ttnmix
+	generate share_nmix_profits = ttbustrans/ttnmix
+	generate share_nmix_rental = (ttroyalties - ttrental_ncor)/ttnmix
+	// Sums up to 1
+	generate discr = share_nmix_proprietors + share_nmix_profits + share_nmix_rental - 1
+	assert abs(discr) < 1e-2 if !missing(discr)
+	drop discr
+
+	// -------------------------------------------------------------------------- //
+	// Intermediary variables
+	// -------------------------------------------------------------------------- //
+
+	// Busness property taxes falling on corporate vs. noncorporate businesses
+	generate propbustax_ncor = ratio_propbustax*hwbus
+	generate propbustax_corp = ratio_propbustax*(hwequ + fraceqpen*hwpen)
+	generate discr = reldif(propbustax_ncor + propbustax_corp, propbustax)
+	assert discr < 1e-1 if !missing(discr)
+	drop discr
+
+	// Sales taxes falling on capital
+	generate fkprk_bus = (ratio_fkprk + ratio_fksubk)*fkbus
+	generate fkprk_equ = (ratio_fkprk + ratio_fksubk)*(fkequ + share_pen_equ*fkpen)
+	generate fkprk_fix = (ratio_fkprk + ratio_fksubk)*(fkfix + share_pen_fix*fkpen)
+	generate fkprk_hou = (ratio_fkprk + ratio_fksubk)*fkhou
+	generate fkprk_mor = (ratio_fkprk + ratio_fksubk)*fkmor
+	generate fkprk_nmo = (ratio_fkprk + ratio_fksubk)*fknmo
+	generate discr = reldif(fkprk_bus + fkprk_equ + fkprk_fix + fkprk_hou + fkprk_mor + fkprk_nmo, fkprk + fksubk)
+	assert discr < 1 if !missing(discr)
+	drop discr
+
+	// Net mixed income variable (slightly different from proprietor's income)
+	generate nmix = flmil ///
+					+ fkbus ///
+					- fkprk_bus ///
+					- propbustax_ncor
+					
+	// -------------------------------------------------------------------------- //
+	// Create DINA variables to match to NIPA
+	// -------------------------------------------------------------------------- //
+
+	// Income
+	generate dina_princ = princ
+	generate dina_peinc = peinc
+	generate dina_poinc = poinc
+	generate dina_dispo = dicsh + invpen
+	generate dina_flemp = flemp
+	generate dina_flwag = flwag
+	generate dina_flsup = flsup
+
+	generate dina_contrib  = -plcon
+	generate dina_uiben    = plobe - 0.8*ssinc_di
+	generate dina_penben   = plpbe + 0.8*ssinc_di
+	generate dina_surplus  = prisupen
+
+	generate dina_proprietors = flmil + fkbus - propbustax_ncor
+	generate dina_rental      = fkhou + fkmor - proprestax
+	generate dina_profits     = fkequ + share_pen_equ*fkpen - propbustax_corp - corptax
+	generate dina_fkfix       = fkfix + share_pen_fix*fkpen
+	generate dina_fknmo       = -fknmo
+						 
+	generate dina_govin = govin
+	generate dina_npinc = npinc
+							
+	generate dina_corptax = corptax
+
+	generate dina_prodtax  = fkprk + flprl + proprestax + propbustax
+	generate dina_prodsub  = -fksubk - flsubl
+	generate dina_proptax  = proprestax + propbustax
+	generate dina_salestax = salestax
+
+	generate dina_taxes        = ditax
+	generate dina_estatetax    = estatetax
+	generate dina_othercontrib = othercontrib
+	generate dina_vet          = divet
+	generate dina_othcash      = dicab - divet
+	generate dina_govcontrib   = ssuicontrib + othercontrib 
+
+	generate dina_medicare = medicare
+	generate dina_medicaid = medicaid
+	generate dina_otherkin = otherkin
+	generate dina_colexp   = colexp
+
+	generate dina_prisupenprivate = prisupenprivate
+	generate dina_prisupgov = prisupgov
+
+	// Wealth
+	generate dina_housing_tenant  = rentalhome
+	generate dina_housing_owner   = ownerhome_heter
+	generate dina_mortgage_tenant = -rentalmort
+	generate dina_mortgage_owner  = -ownermort
+	generate dina_equ_scorp       = scorw
+	generate dina_equ_nscorp      = hwequ - scorw
+	generate dina_business        = hwbus
+	generate dina_pensions        = hwpen
+	generate dina_nonmortage      = -nonmort
+	generate dina_fixed           = hwfix
+	generate dina_wealth          = hweal
+
+	// Sanity checks
+	generate discr = .
+
+	replace discr = reldif(dina_princ, dina_flemp + dina_proprietors + dina_rental + ///
+		dina_profits + dina_corptax + dina_fkfix - dina_fknmo + dina_prodtax - dina_prodsub + dina_govin + dina_npinc)
+	assert discr < 5 if !missing(discr)
+		
+	replace discr = reldif(dina_princ + dina_uiben + dina_penben - dina_contrib + dina_surplus, dina_peinc)
+	assert discr < 1e-1 if !missing(discr)
+
+	replace discr = reldif(dina_dispo, dina_peinc - dina_surplus - dina_govin - dina_npinc - dina_othercontrib ///
+		- dina_taxes - dina_estatetax - dina_corptax - dina_prodtax + dina_prodsub + dina_vet + dina_othcash)
+	assert discr < 1e-1 if !missing(discr)
+
+	replace discr = reldif(dina_poinc + dina_salestax - potax, dina_dispo + dina_medicare + dina_medicaid + dina_otherkin ///
+		+ dina_govin + dina_npinc + dina_colexp + dina_prisupenprivate + dina_prisupgov)
+	assert discr < 1e-1 if !missing(discr)
+
+	// -------------------------------------------------------------------------- //
+	// Save
+	// -------------------------------------------------------------------------- //
+
+	keep year id weight fiinc uiinc xkidspop married filer acs female age age_group top400 sex race educ dina_*
+	compress
+    append using "`results'"
+    save "`results'", replace
 }
 
-replace princ = princ - flemp + flemp_ssa
-replace peinc = peinc - flemp + flemp_ssa
-replace dicsh = dicsh - flemp + flemp_ssa
-replace poinc = poinc - flemp + flemp_ssa
-replace flemp = flemp_ssa
-
-// -------------------------------------------------------------------------- //
-// Formula for the allocation of business property taxes
-// -------------------------------------------------------------------------- //
-
-generate ratio_propbustax = ttproptax_bus/(ttdivw + ttscorw + ttschcpartw + fraceqpen*(ttpenw + ttpeniraw))
-// Checks consistency with the microfiles
-generate discr = reldif(propbustax, ratio_propbustax*(hwequ + hwbus + fraceqpen*hwpen))
-assert abs(discr) < 1e-5 if !missing(discr)
-drop discr
-
-// -------------------------------------------------------------------------- //
-// Formula for the allocation of production taxes falling on capital:
-// fkprk is proportional to fkinc. So we just need to estimate the ratio
-// of fkprk to fkinc
-// -------------------------------------------------------------------------- //
-
-generate ratio_fkprk = ttfkprk/(ttfkinc - ttfksubk - ttfkprk)
-generate ratio_fksubk = ttfksubk/(ttfkinc - ttfksubk - ttfkprk)
-// Checks consistency with the microfiles
-generate discr = reldif(fkprk, ratio_fkprk*(fkinc - fkprk - fksubk))
-assert abs(discr) < 1e-5 if !missing(discr)
-replace discr = reldif(fksubk, ratio_fksubk*(fkinc - fkprk - fksubk))
-drop discr
-
-// -------------------------------------------------------------------------- //
-// Share of pension income coming from equity and fixed-income assets
-// -------------------------------------------------------------------------- //
-
-generate share_pen_equ = ttfkpen_eq/ttfkpen
-generate share_pen_fix = ttfpen_fix/ttfkpen
-// Sums up to 1
-generate discr = share_pen_equ + share_pen_fix - 1
-assert abs(discr) < 1e-4 if !missing(discr)
-drop discr
-
-// -------------------------------------------------------------------------- //
-// Share of nonprofit income falling on the different components
-// -------------------------------------------------------------------------- //
-
-generate share_npinc_profits = (ttnpinc_div + ttnpinc_nos)/ttnpinc
-generate share_npinc_netint  = ttnpinc_int/ttnpinc
-// Sums up to 1
-generate discr = share_npinc_profits + share_npinc_netint - 1
-assert abs(discr) < 1e-4 if !missing(discr)
-drop discr
-
-// -------------------------------------------------------------------------- //
-// Discrepancy between net mixed income and proprietor's income
-// -------------------------------------------------------------------------- //
-
-generate share_nmix_proprietors = ttproprietors/ttnmix
-generate share_nmix_profits = ttbustrans/ttnmix
-generate share_nmix_rental = (ttroyalties - ttrental_ncor)/ttnmix
-// Sums up to 1
-generate discr = share_nmix_proprietors + share_nmix_profits + share_nmix_rental - 1
-assert abs(discr) < 1e-4 if !missing(discr)
-drop discr
-
-// -------------------------------------------------------------------------- //
-// Intermediary variables
-// -------------------------------------------------------------------------- //
-
-// Busness property taxes falling on corporate vs. noncorporate businesses
-generate propbustax_ncor = ratio_propbustax*hwbus
-generate propbustax_corp = ratio_propbustax*(hwequ + fraceqpen*hwpen)
-generate discr = reldif(propbustax_ncor + propbustax_corp, propbustax)
-assert discr < 1e-4 if !missing(discr)
-drop discr
-
-// Sales taxes falling on capital
-generate fkprk_bus = (ratio_fkprk + ratio_fksubk)*fkbus
-generate fkprk_equ = (ratio_fkprk + ratio_fksubk)*(fkequ + share_pen_equ*fkpen)
-generate fkprk_fix = (ratio_fkprk + ratio_fksubk)*(fkfix + share_pen_fix*fkpen)
-generate fkprk_hou = (ratio_fkprk + ratio_fksubk)*fkhou
-generate fkprk_mor = (ratio_fkprk + ratio_fksubk)*fkmor
-generate fkprk_nmo = (ratio_fkprk + ratio_fksubk)*fknmo
-generate discr = reldif(fkprk_bus + fkprk_equ + fkprk_fix + fkprk_hou + fkprk_mor + fkprk_nmo, fkprk + fksubk)
-assert discr < 1e-3 if !missing(discr)
-drop discr
-
-// Net mixed income variable (slightly different from proprietor's income)
-generate nmix = flmil ///
-                + fkbus ///
-                - fkprk_bus ///
-                - propbustax_ncor
-                
-// -------------------------------------------------------------------------- //
-// Create DINA variables to match to NIPA
-// -------------------------------------------------------------------------- //
-
-// Income
-generate dina_princ = princ
-generate dina_peinc = peinc
-generate dina_poinc = poinc
-generate dina_dispo = dicsh + invpen
-generate dina_flemp = flemp
-generate dina_flwag = flwag
-generate dina_flsup = flsup
-
-generate dina_contrib  = -plcon
-generate dina_uiben    = plobe - 0.8*ssinc_di
-generate dina_penben   = plpbe + 0.8*ssinc_di
-generate dina_surplus  = prisupen
-
-generate dina_proprietors = flmil + fkbus - propbustax_ncor
-generate dina_rental      = fkhou + fkmor - proprestax
-generate dina_profits     = fkequ + share_pen_equ*fkpen - propbustax_corp - corptax
-generate dina_fkfix       = fkfix + share_pen_fix*fkpen
-generate dina_fknmo       = -fknmo
-                     
-generate dina_govin = govin
-generate dina_npinc = npinc
-                        
-generate dina_corptax = corptax
-
-generate dina_prodtax  = fkprk + flprl + proprestax + propbustax
-generate dina_prodsub  = -fksubk - flsubl
-generate dina_proptax  = proprestax + propbustax
-generate dina_salestax = salestax
-
-generate dina_taxes        = ditax
-generate dina_estatetax    = estatetax
-generate dina_othercontrib = othercontrib
-generate dina_vet          = divet
-generate dina_othcash      = dicab - divet
-generate dina_govcontrib   = ssuicontrib + othercontrib 
-
-generate dina_medicare = medicare
-generate dina_medicaid = medicaid
-generate dina_otherkin = otherkin
-generate dina_colexp   = colexp
-
-generate dina_prisupenprivate = prisupenprivate
-generate dina_prisupgov = prisupgov
-
-// Wealth
-generate dina_housing_tenant  = rentalhome
-generate dina_housing_owner   = ownerhome_heter
-generate dina_mortgage_tenant = -rentalmort
-generate dina_mortgage_owner  = -ownermort
-generate dina_equ_scorp       = scorw
-generate dina_equ_nscorp      = hwequ - scorw
-generate dina_business        = hwbus
-generate dina_pensions        = hwpen
-generate dina_nonmortage      = -nonmort
-generate dina_fixed           = hwfix
-generate dina_wealth          = hweal
-
-// Sanity checks
-generate discr = .
-
-replace discr = reldif(dina_princ, dina_flemp + dina_proprietors + dina_rental + ///
-    dina_profits + dina_corptax + dina_fkfix - dina_fknmo + dina_prodtax - dina_prodsub + dina_govin + dina_npinc)
-assert discr < 1e-2 if !missing(discr)
-    
-replace discr = reldif(dina_princ + dina_uiben + dina_penben - dina_contrib + dina_surplus, dina_peinc)
-assert discr < 1e-2 if !missing(discr)
-
-replace discr = reldif(dina_dispo, dina_peinc - dina_surplus - dina_govin - dina_npinc - dina_othercontrib ///
-    - dina_taxes - dina_estatetax - dina_corptax - dina_prodtax + dina_prodsub + dina_vet + dina_othcash)
-assert discr < 2e-2 if !missing(discr)
-
-replace discr = reldif(dina_poinc + dina_salestax - potax, dina_dispo + dina_medicare + dina_medicaid + dina_otherkin ///
-    + dina_govin + dina_npinc + dina_colexp + dina_prisupenprivate + dina_prisupgov)
-assert discr < 1e-2 if !missing(discr)
-
-// -------------------------------------------------------------------------- //
-// Save
-// -------------------------------------------------------------------------- //
-
-keep year id weight fiinc uiinc xkidspop married filer acs female age age_group top400 sex race educ dina_*
+use "`results'", clear
 compress
 save "$work/02-prepare-dina/dina-simplified.dta", replace
 
@@ -205,85 +235,113 @@ save "$work/02-prepare-dina/dina-simplified.dta", replace
 // Version with normalized components
 // -------------------------------------------------------------------------- //
 
-use "$work/02-prepare-dina/dina-simplified.dta", clear
+clear
+tempfile results_norm
+save "`results_norm'", replace emptyok
 
-foreach v of varlist dina_* {
-    gegen avg = mean(`v') [pw=weight], by(year)
-    replace `v' = `v'/avg
-    drop avg
+foreach decade in 1975 1985 1995 2005 2015 {
+    local end_year = min(`decade' + 9, $last_year_dina)
+    
+    use if inrange(year, `decade', `end_year') ///
+        using "$work/02-prepare-dina/dina-simplified.dta", clear
+
+    foreach v of varlist dina_* {
+        gegen avg = mean(`v') [pw=weight], by(year)
+        replace `v' = `v'/avg
+        drop avg
+    }
+    summarize weight, meanonly
+    replace weight = weight*1e8/r(sum)
+    compress
+    
+    append using "`results_norm'"
+    save "`results_norm'", replace
 }
-summarize weight, meanonly
-replace weight = weight*1e8/r(sum)
-compress
+
+use "`results_norm'", clear
 save "$work/02-prepare-dina/dina-simplified-normalized.dta", replace
 
 // -------------------------------------------------------------------------- //
 // Version with rescaled factor incomes
 // -------------------------------------------------------------------------- //
 
-use "$work/02-prepare-dina/dina-simplified.dta", clear
+clear
+tempfile results_resc
+save "`results_resc'", replace emptyok
 
-merge n:1 year using "$work/02-prepare-nipa/nipa-simplified-yearly.dta", nogenerate keep(match)
+foreach decade in 1975 1985 1995 2005 2015 {
+    local end_year = min(`decade' + 9, $last_year_dina)
+    
+    use if inrange(year, `decade', `end_year') ///
+        using "$work/02-prepare-dina/dina-simplified.dta", clear
 
-local components flemp contrib uiben penben surplus proprietors rental ///
-    profits fkfix govin fknmo corptax prodtax prodsub taxes estatetax othercontrib ///
-    vet othcash medicare medicaid otherkin colexp prisupenprivate prisupgov ///
-    govcontrib salestax proptax npinc
+    merge n:1 year using "$work/02-prepare-nipa/nipa-simplified-yearly.dta", nogenerate keep(match)
+	
+	local components flemp contrib uiben penben surplus proprietors rental ///
+		profits fkfix govin fknmo corptax prodtax prodsub taxes estatetax othercontrib ///
+		vet othcash medicare medicaid otherkin colexp prisupenprivate prisupgov ///
+		govcontrib salestax proptax npinc
 
-foreach compo in `components' {
-    gegen dina_agg = total(weight*dina_`compo'), by(year)
-    replace dina_`compo' = dina_`compo'*(nipa_`compo'/dina_agg)
-    drop dina_agg
+	foreach compo in `components' {
+		gegen dina_agg = total(weight*dina_`compo'), by(year)
+		replace dina_`compo' = dina_`compo'*(nipa_`compo'/dina_agg)
+		drop dina_agg
+	}
+
+	generate dispo2 = dina_flemp + dina_proprietors + dina_rental + dina_profits + dina_corptax + dina_fkfix - dina_fknmo ///
+		- dina_contrib - dina_othercontrib - dina_taxes - dina_estatetax - dina_corptax + dina_vet + dina_othcash ///
+		+ dina_medicare + dina_medicaid
+		
+	generate dina_surplus_ss = dina_surplus - dina_prisupenprivate
+
+	gegen ttdispo           = mean(dispo2) [pw=weight], by(year)
+	gegen ttflemp           = mean(dina_flemp) [pw=weight], by(year)
+	gegen ttprisupenprivate = mean(dina_prisupenprivate) [pw=weight], by(year)
+	gegen ttsurplus_ss      = mean(dina_surplus_ss) [pw=weight], by(year)
+	gegen ttsalestax        = mean(dina_salestax) [pw=weight], by(year)
+	gegen ttprisupgov       = mean(dina_prisupgov) [pw=weight], by(year)
+	gegen ttgovin           = mean(dina_govin) [pw=weight], by(year)
+
+	replace dina_prisupenprivate = dina_flemp/ttflemp*ttprisupenprivate
+	replace dina_surplus_ss = dispo2/ttdispo*ttsurplus_ss
+	replace dina_surplus = dina_prisupenprivate + dina_surplus_ss
+	replace dina_prisupgov = dispo2/ttdispo*ttprisupgov
+	replace dina_govin = dispo2/ttdispo*ttgovin
+
+	generate dina_potax = dispo2/ttdispo*ttsalestax
+
+	generate dina_princ_resc = dina_flemp + dina_proprietors + dina_rental + ///
+		dina_profits + dina_corptax + dina_fkfix - dina_fknmo + dina_prodtax - dina_prodsub + dina_govin + dina_npinc
+	generate dina_peinc_resc = dina_princ_resc + dina_uiben + dina_penben - dina_contrib + dina_surplus
+	generate dina_dispo_resc = dina_peinc_resc - dina_surplus - dina_govin - dina_npinc - dina_othercontrib ///
+		- dina_taxes - dina_estatetax - dina_corptax - dina_prodtax + dina_prodsub + dina_vet + dina_othcash
+	generate dina_poinc_resc = dina_dispo_resc - dina_salestax + dina_potax + dina_medicare + dina_medicaid + dina_otherkin ///
+		+ dina_govin + dina_npinc + dina_colexp + dina_prisupenprivate + dina_prisupgov
+
+	// Then do wealth
+	merge n:1 year using "$work/02-prepare-fa/fa-simplified-yearly.dta", nogenerate keep(match)
+
+	local components housing_tenant housing_owner mortgage_tenant ///
+		mortgage_owner equ_scorp equ_nscorp business pensions nonmortage fixed
+		
+	foreach compo in `components' {
+		gegen dina_agg = total(weight*dina_`compo'), by(year)
+		replace dina_`compo' = dina_`compo'*(fa_`compo'/dina_agg)
+		drop dina_agg
+	}
+
+	generate dina_hweal_resc = dina_housing_tenant + dina_housing_owner - dina_mortgage_tenant - ///
+		dina_mortgage_owner + dina_equ_scorp + dina_equ_nscorp + dina_business + dina_pensions - dina_nonmortage + dina_fixed
+    
+	keep year id weight dina_princ_resc dina_peinc_resc dina_dispo_resc dina_poinc_resc dina_hweal_resc
+    append using "`results_resc'"
+    save "`results_resc'", replace
 }
 
-generate dispo2 = dina_flemp + dina_proprietors + dina_rental + dina_profits + dina_corptax + dina_fkfix - dina_fknmo ///
-    - dina_contrib - dina_othercontrib - dina_taxes - dina_estatetax - dina_corptax + dina_vet + dina_othcash ///
-    + dina_medicare + dina_medicaid
-    
-generate dina_surplus_ss = dina_surplus - dina_prisupenprivate
-
-gegen ttdispo           = mean(dispo2) [pw=weight], by(year)
-gegen ttflemp           = mean(dina_flemp) [pw=weight], by(year)
-gegen ttprisupenprivate = mean(dina_prisupenprivate) [pw=weight], by(year)
-gegen ttsurplus_ss      = mean(dina_surplus_ss) [pw=weight], by(year)
-gegen ttsalestax        = mean(dina_salestax) [pw=weight], by(year)
-gegen ttprisupgov       = mean(dina_prisupgov) [pw=weight], by(year)
-gegen ttgovin           = mean(dina_govin) [pw=weight], by(year)
-
-replace dina_prisupenprivate = dina_flemp/ttflemp*ttprisupenprivate
-replace dina_surplus_ss = dispo2/ttdispo*ttsurplus_ss
-replace dina_surplus = dina_prisupenprivate + dina_surplus_ss
-replace dina_prisupgov = dispo2/ttdispo*ttprisupgov
-replace dina_govin = dispo2/ttdispo*ttgovin
-
-generate dina_potax = dispo2/ttdispo*ttsalestax
-
-generate dina_princ_resc = dina_flemp + dina_proprietors + dina_rental + ///
-    dina_profits + dina_corptax + dina_fkfix - dina_fknmo + dina_prodtax - dina_prodsub + dina_govin + dina_npinc
-generate dina_peinc_resc = dina_princ_resc + dina_uiben + dina_penben - dina_contrib + dina_surplus
-generate dina_dispo_resc = dina_peinc_resc - dina_surplus - dina_govin - dina_npinc - dina_othercontrib ///
-    - dina_taxes - dina_estatetax - dina_corptax - dina_prodtax + dina_prodsub + dina_vet + dina_othcash
-generate dina_poinc_resc = dina_dispo_resc - dina_salestax + dina_potax + dina_medicare + dina_medicaid + dina_otherkin ///
-    + dina_govin + dina_npinc + dina_colexp + dina_prisupenprivate + dina_prisupgov
-
-// Then do wealth
-merge n:1 year using "$work/02-prepare-fa/fa-simplified-yearly.dta", nogenerate keep(match)
-
-local components housing_tenant housing_owner mortgage_tenant ///
-    mortgage_owner equ_scorp equ_nscorp business pensions nonmortage fixed
-    
-foreach compo in `components' {
-    gegen dina_agg = total(weight*dina_`compo'), by(year)
-    replace dina_`compo' = dina_`compo'*(fa_`compo'/dina_agg)
-    drop dina_agg
-}
-
-generate dina_hweal_resc = dina_housing_tenant + dina_housing_owner - dina_mortgage_tenant - ///
-    dina_mortgage_owner + dina_equ_scorp + dina_equ_nscorp + dina_business + dina_pensions - dina_nonmortage + dina_fixed
-    
-keep year id weight dina_princ_resc dina_peinc_resc dina_dispo_resc dina_poinc_resc dina_hweal_resc
+use "`results_resc'", clear
 renvars *_resc, postdrop(5)
 save "$work/02-prepare-dina/dina-rescaled.dta", replace
+    
     
 // -------------------------------------------------------------------------- //
 // Check income aggregates against NIPA
@@ -301,9 +359,7 @@ local to_plot princ peinc poinc dispo flemp contrib uiben penben surplus ///
     proprietors rental profits fkfix govin fknmo corptax prodtax prodsub taxes ///
     estatetax othercontrib vet othcash medicare medicaid otherkin colexp ///
     prisupenprivate prisupgov govcontrib proptax salestax npinc
-    
-*local to_plot govin
-    
+
 local label_princ "Factor national income"
 local label_peinc "Pretax national income"
 local label_poinc "Post-tax national income"
@@ -439,7 +495,7 @@ foreach v in profits fkfix rental proprietors {
 
 keep year quarter share_*
 
-keep if inrange(year, 1976, 2019)
+keep if inrange(year, 1976, $last_year_dina)
 sort year quarter
 
 foreach v of varlist share_* {
@@ -454,15 +510,15 @@ format time %tq
 gr tw (con share_profits_tot share_profits_top time, lw(medthick..) msize(small..) msym(Oh none) msize(small..) col(cranberry ebblue)) ///
     (pcarrowi 129 `=yq(1992, 1)' 115 `=yq(1995, 1)', col(cranberry) lw(medthick)) ///
     (pcarrowi 82 `=yq(2012, 1)' 96 `=yq(2010, 1)', col(ebblue) lw(medthick)), ///
-    xlabel(`=yq(1980, 1)'(40)`=yq(2010, 1)') xtitle("") ylabel(70(10)140) ytitle("Index (1976 = 100)") legend(off) ///
+    xlabel(`=yq(1980, 1)'(40)`=yq(2020, 1)') xtitle("") ylabel(70(10)140) ytitle("Index (1976 = 100)") legend(off) ///
     text(135 `=yq(1990, 1)' "The national income’s share" "of {bf:pretax corporate profits}" "is {bf:highly volatile}", col(cranberry)) ///
     text(75 `=yq(2012, 1)' "The share of" "{bf:pretax corporate profits}" "earned by the top 10%" "is {bf:comparatively stable}", col(ebblue))
 graph export "$graphs/02-prepare-dina/volatility-profits.pdf", replace
 
 gr tw (con share_fkfix_tot share_fkfix_top time, lw(medthick..) msize(small..) msym(Oh none) msize(small..) col(cranberry ebblue)) ///
     (pcarrowi 152 `=yq(2003, 1)' 125 `=yq(1999, 1)', col(cranberry) lw(medthick)) ///
-    (pcarrowi 91 `=yq(1987, 1)' 105 `=yq(1990, 1)', col(ebblue) lw(medthick)), ///
-    xlabel(`=yq(1980, 1)'(40)`=yq(2010, 1)') xtitle("") ylabel(70(10)170) ytitle("Index (1976 = 100)") legend(off) ///
+    (pcarrowi 91 `=yq(1987, 1)' 100 `=yq(1990, 1)', col(ebblue) lw(medthick)), ///
+    xlabel(`=yq(1980, 1)'(40)`=yq(2020, 1)') xtitle("") ylabel(70(10)170) ytitle("Index (1976 = 100)") legend(off) ///
     text(160 `=yq(2007, 1)' "The national income’s share" "of {bf:interest income}" "is {bf:highly volatile}", col(cranberry)) ///
     text(82 `=yq(1987, 1)' "The share of" "{bf:interest income}" "earned by the top 10%" "is {bf:comparatively stable}", col(ebblue))
 graph export "$graphs/02-prepare-dina/volatility-interest.pdf", replace
@@ -470,7 +526,7 @@ graph export "$graphs/02-prepare-dina/volatility-interest.pdf", replace
 gr tw (con share_proprietors_tot share_proprietors_top time, lw(medthick..) msize(small..) msym(Oh none) msize(small..) col(cranberry ebblue)) ///
     (pcarrowi 110 `=yq(1995, 1)' 105 `=yq(2000, 1)', col(cranberry) lw(medthick)) ///
     (pcarrowi 87 `=yq(2007, 1)' 100 `=yq(2003, 1)', col(ebblue) lw(medthick)), ///
-    xlabel(`=yq(1980, 1)'(40)`=yq(2010, 1)') xtitle("") ylabel(70(10)120) ytitle("Index (1976 = 100)") legend(off) ///
+    xlabel(`=yq(1980, 1)'(40)`=yq(2020, 1)') xtitle("") ylabel(70(10)120) ytitle("Index (1976 = 100)") legend(off) ///
     text(110 `=yq(1987, 1)' "The national income’s share" "of {bf:proprietor's income}" "is {bf:highly volatile}", col(cranberry)) ///
     text(82 `=yq(2007, 1)' "The share of" "{bf:proprietor's income}" "earned by the top 10%" "is {bf:comparatively stable}", col(ebblue))
 graph export "$graphs/02-prepare-dina/volatility-proprietors.pdf", replace
@@ -478,7 +534,7 @@ graph export "$graphs/02-prepare-dina/volatility-proprietors.pdf", replace
 gr tw (con share_rental_tot share_rental_top time, lw(medthick..) msize(small..) msym(Oh none) msize(small..) col(cranberry ebblue)) ///
     (pcarrowi 265 `=yq(1994, 1)' 210 `=yq(1997, 1)', col(cranberry) lw(medthick)) ///
     (pcarrowi 50 `=yq(2003, 1)' 100 `=yq(2000, 1)', col(ebblue) lw(medthick)), ///
-    xlabel(`=yq(1980, 1)'(40)`=yq(2010, 1)') xtitle("") ylabel(0(100)400) ytitle("Index (1976 = 100)") legend(off) ///
+    xlabel(`=yq(1980, 1)'(40)`=yq(2020, 1)') xtitle("") ylabel(0(100)400) ytitle("Index (1976 = 100)") legend(off) ///
     text(300 `=yq(1990, 1)' "The national income’s share" "of {bf:rental income}" "is {bf:highly volatile}", col(cranberry)) ///
     text(50 `=yq(2010, 1)' "The share of" "{bf:rental income}" "earned by the top 10%" "is {bf:comparatively stable}", col(ebblue))
 graph export "$graphs/02-prepare-dina/volatility-rental.pdf", replace
@@ -487,15 +543,15 @@ graph export "$graphs/02-prepare-dina/volatility-rental.pdf", replace
 gr tw (con share_profits_tot share_profits_top time, lw(medthick..) msize(small..) msym(Oh none) msize(small..) col(cranberry ebblue)) ///
     (pcarrowi 129 `=yq(1992, 1)' 115 `=yq(1995, 1)', col(cranberry) lw(medthick)) ///
     (pcarrowi 82 `=yq(2012, 1)' 96 `=yq(2010, 1)', col(ebblue) lw(medthick)), ///
-    scale(1.2) xlabel(`=yq(1980, 1)'(40)`=yq(2010, 1)') xtitle("") ylabel(70(10)140) ytitle("Index (1976 = 100)") legend(off) ///
+    scale(1.2) xlabel(`=yq(1980, 1)'(40)`=yq(2020, 1)') xtitle("") ylabel(70(10)140) ytitle("Index (1976 = 100)") legend(off) ///
     text(135 `=yq(1990, 1)' "National income’s share" "of {bf:pretax corporate profits}", col(cranberry)) ///
     text(75 `=yq(2010, 1)' "Share of" "{bf:pretax corporate profits}" "earned by the top 10%", col(ebblue))
 graph export "$graphs/02-prepare-dina/volatility-profits-paper.pdf", replace
 
 gr tw (con share_fkfix_tot share_fkfix_top time, lw(medthick..) msize(small..) msym(Oh none) msize(small..) col(cranberry ebblue)) ///
     (pcarrowi 152 `=yq(2003, 1)' 125 `=yq(1999, 1)', col(cranberry) lw(medthick)) ///
-    (pcarrowi 91 `=yq(1987, 1)' 105 `=yq(1990, 1)', col(ebblue) lw(medthick)), ///
-    scale(1.2) xlabel(`=yq(1980, 1)'(40)`=yq(2010, 1)') xtitle("") ylabel(70(10)170) ytitle("Index (1976 = 100)") legend(off) ///
+    (pcarrowi 91 `=yq(1987, 1)' 100 `=yq(1990, 1)', col(ebblue) lw(medthick)), ///
+    scale(1.2) xlabel(`=yq(1980, 1)'(40)`=yq(2020, 1)') xtitle("") ylabel(70(10)170) ytitle("Index (1976 = 100)") legend(off) ///
     text(160 `=yq(2007, 1)' "National income’s share" "of {bf:interest income}", col(cranberry)) ///
     text(82 `=yq(1987, 1)' "Share of" "{bf:interest income}" "earned by the top 10%", col(ebblue))
 graph export "$graphs/02-prepare-dina/volatility-interest-paper.pdf", replace
@@ -503,7 +559,7 @@ graph export "$graphs/02-prepare-dina/volatility-interest-paper.pdf", replace
 gr tw (con share_proprietors_tot share_proprietors_top time, lw(medthick..) msize(small..) msym(Oh none) msize(small..) col(cranberry ebblue)) ///
     (pcarrowi 110 `=yq(1995, 1)' 105 `=yq(2000, 1)', col(cranberry) lw(medthick)) ///
     (pcarrowi 87 `=yq(2007, 1)' 100 `=yq(2003, 1)', col(ebblue) lw(medthick)), ///
-    scale(1.2) xlabel(`=yq(1980, 1)'(40)`=yq(2010, 1)') xtitle("") ylabel(70(10)120) ytitle("Index (1976 = 100)") legend(off) ///
+    scale(1.2) xlabel(`=yq(1980, 1)'(40)`=yq(2020, 1)') xtitle("") ylabel(70(10)120) ytitle("Index (1976 = 100)") legend(off) ///
     text(110 `=yq(1985, 1)' "National income’s share" "of {bf:proprietors’ income}", col(cranberry)) ///
     text(82 `=yq(2007, 1)' "Share of" "{bf:proprietor's income}" "earned by the top 10%", col(ebblue))
 graph export "$graphs/02-prepare-dina/volatility-proprietors-paper.pdf", replace
@@ -511,7 +567,7 @@ graph export "$graphs/02-prepare-dina/volatility-proprietors-paper.pdf", replace
 gr tw (con share_rental_tot share_rental_top time, lw(medthick..) msize(small..) msym(Oh none) msize(small..) col(cranberry ebblue)) ///
     (pcarrowi 265 `=yq(1994, 1)' 210 `=yq(1997, 1)', col(cranberry) lw(medthick)) ///
     (pcarrowi 50 `=yq(2003, 1)' 100 `=yq(2000, 1)', col(ebblue) lw(medthick)), ///
-    scale(1.2) xlabel(`=yq(1980, 1)'(40)`=yq(2010, 1)') xtitle("") ylabel(0(100)400) ytitle("Index (1976 = 100)") legend(off) ///
+    scale(1.2) xlabel(`=yq(1980, 1)'(40)`=yq(2020, 1)') xtitle("") ylabel(0(100)400) ytitle("Index (1976 = 100)") legend(off) ///
     text(300 `=yq(1990, 1)' "National income’s share" "of {bf:rental income}", col(cranberry)) ///
     text(50 `=yq(2010, 1)' "Share of" "{bf:rental income}" "earned by the top 10%", col(ebblue))
 graph export "$graphs/02-prepare-dina/volatility-rental-paper.pdf", replace

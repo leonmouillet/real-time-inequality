@@ -15,33 +15,10 @@ global ce_last_year = r(max)
 summarize month if year == $ce_last_year, meanonly
 global ce_last_month = r(max)
 
-// -------------------------------------------------------------------------- //
-// Import crosswalk between NAICS codes (used by QCEW) and BLS/CES industry codes
-// -------------------------------------------------------------------------- //
-
-import delimited "$rawdata/crosswalks/bls-naics-crosswalk.csv", delimit(",") clear encoding(utf8)
-
-generate ownership_code = .
-replace ownership_code = 8 if ownership == "All government"
-replace ownership_code = 1 if ownership == "Federal Government"
-replace ownership_code = 3 if ownership == "Local Government"
-replace ownership_code = 5 if ownership == "Private"
-replace ownership_code = 0 if ownership == "Private and all government"
-replace ownership_code = 2 if ownership == "State Government"
-replace ownership_code = . if ownership == "State and Local Government"
-
-replace naicscode = substr(cesindustrycode, 4, 6) if substr(cesindustrycode, 1, 2) == "90"
-replace naicscode = ustrregexs(1) if substr(cesindustrycode, 1, 2) == "90" & ustrregexm(naicscode, "^([0-9]*?)0*$")
-
-save "$work/01-import-sm/bls-naics-crosswalk.dta", replace
-
-// -------------------------------------------------------------------------- //
-// Make extrapolations in QCEW data
-// -------------------------------------------------------------------------- //
-
+// Import the latest version of QCEW data, and most recent years only
 use "$work/02-disaggregate-qcew/qcew-monthly.dta", clear
-// We only update the latest version of the data
 keep if version == "NAICS"
+keep if year >= 2015
 
 gegen id = group(area_fips own_code industry_code)
 
@@ -189,8 +166,8 @@ replace bls_sector_code4 = "31" if inlist(naics2_code, "31")
 replace bls_sector_code4 = "32" if inlist(naics2_code, "32", "33")
 
 replace bls_sector_code4 = "41" if inlist(naics2_code, "42")
-replace bls_sector_code4 = "42" if inlist(naics2_code, "44", "45", "48")
-replace bls_sector_code4 = "43" if inlist(naics2_code, "49", "22")
+replace bls_sector_code4 = "42" if inlist(naics2_code, "44", "45")
+replace bls_sector_code4 = "43" if inlist(naics2_code, "48", "49", "22")
 
 replace bls_sector_code4 = "50" if inlist(naics2_code, "51")
 replace bls_sector_code4 = "55" if inlist(naics2_code, "52", "53")
@@ -200,6 +177,7 @@ replace bls_sector_code4 = "70" if inlist(naics2_code, "71", "72")
 replace bls_sector_code4 = "80" if inlist(naics2_code, "81")
 
 replace bls_sector_code4 = "90" if inlist(naics2_code, "91", "92", "93")
+
 
 // -------------------------------------------------------------------------- //
 // Match employment and earnings from SM in two versions: one that matches
@@ -386,17 +364,17 @@ replace chg_avg_mthly_wages_pred = avg_chg_avg_mthly_wages_pred if missing(chg_a
 
 // Predict residual via FE only regression
 gegen industry_fe = group(own_code industry_code month)
+gen byte naics_regime = (year >= 2022)  // NAICS regime dummy to allow industry FEs to reset after 2022 NAICS reclassification
 foreach y of varlist chg_mthly_emplvl chg_avg_mthly_wages {
-    generate resid = `y' - `y'_pred
-    reghdfe resid [aw=mthly_emplvl], verbose(1) coeflegend absorb(area_fips industry_fe, savefe)
-    generate __hdfe0__ = _b[_cons]
+    gen resid = `y' - `y'_pred
+    reghdfe resid [aw=mthly_emplvl], absorb(area_fips i.industry_fe##i.naics_regime, savefe) verbose(1) coeflegend
+    gen __hdfe0__ = _b[_cons]
     gegen __hdfe1__ = firstnm(__hdfe1__), by(area_fips) replace
-    gegen __hdfe2__ = firstnm(__hdfe2__), by(industry_fe) replace
+    gegen __hdfe2__ = firstnm(__hdfe2__), by(industry_fe naics_regime) replace
     // If fixed effect missing, assume zero
     forvalues i = 1/2 {
         replace __hdfe`i'__ = 0 if missing(__hdfe`i'__)
     }
-    // Make prediction
     replace `y'_pred = `y'_pred + __hdfe0__ + __hdfe1__ + __hdfe2__
     drop __hdfe* resid
 }
@@ -419,185 +397,7 @@ save "$work/02-update-qcew/qcew-monthly-updated.dta", replace
 
 // Add SIC version of the data as well (not extrapolated)
 use "$work/02-disaggregate-qcew/qcew-monthly.dta", clear
-keep if version == "SIC"
+drop if (version == "NAICS") & (year >= 2015)
 drop is_imputed
 append using "$work/02-update-qcew/qcew-monthly-updated.dta"
 save "$work/02-update-qcew/qcew-monthly-updated.dta", replace
-
-// -------------------------------------------------------------------------- //
-// Do backtesting of the extrapolation
-// -------------------------------------------------------------------------- //
-
-use if year >= 2019 using "$work/02-update-qcew/qcew-monthly-updated-backtesting.dta", clear
-
-// Indicator for the backtesting period
-generate bt = (year >= 2020)
-
-// Last value before backtesting
-generate last_mthly_emplvl_bt = mthly_emplvl if year == 2019 & month == 12
-generate last_avg_mthly_wages_bt = avg_mthly_wages if year == 2019 & month == 12
-sort id year month
-by id: carryforward last_mthly_emplvl_bt last_avg_mthly_wages_bt, replace
-
-// Cumulate to get prediction
-by id: generate mthly_emplvl_bt = last_mthly_emplvl_bt*exp(sum(chg_mthly_emplvl_pred)) if bt
-by id: generate avg_mthly_wages_bt = last_avg_mthly_wages_bt*exp(sum(chg_avg_mthly_wages_pred)) if bt
-
-// Aggregate by quintile
-drop bracket
-replace avg_mthly_wages_bt = avg_mthly_wages if time < ym(2020, 01)
-gquantiles bracket = avg_mthly_wages_bt [aw=mthly_emplvl], xtile nquantiles(4) by(year month)
-replace avg_mthly_wages_bt = . if time < ym(2020, 01)
-gcollapse (mean) mthly_emplvl mthly_emplvl_bt avg_mthly_wages avg_mthly_wages_bt [aw=mthly_emplvl], by(bracket year month)
-
-// Make into an index and plot
-generate time = ym(year, month)
-format time %tm
-sort bracket time
-foreach v of varlist mthly_emplvl_bt avg_mthly_wages_bt mthly_emplvl avg_mthly_wages {
-    generate ref = `v' if year == 2020 & month == 1
-    gegen ref = min(ref), by(bracket) replace
-    replace `v' = 100*`v'/ref
-    drop ref
-}
-
-// Rescale wage growth (since wage income will be normalized)
-gegen avg_wages_bt = mean(avg_mthly_wages_bt) [pw=mthly_emplvl_bt], by(time)
-gegen avg_wages = mean(avg_mthly_wages) [pw=mthly_emplvl], by(time)
-replace avg_mthly_wages_bt = avg_mthly_wages_bt/avg_wages_bt*avg_wages
-
-generate quartile = ""
-replace quartile = "1st quartile" if bracket == 1
-replace quartile = "2nd quartile" if bracket == 2
-replace quartile = "3rd quartile" if bracket == 3
-replace quartile = "4th quartile" if bracket == 4
-
-keep if inrange(time, ym(2019, 10), ym(2020, 06))
-
-gr tw con mthly_emplvl mthly_emplvl_bt time, by(quartile, note("")) ///
-    ytitle("Employment level (01/2020 = 100)") xtitle("") xlabel(`=ym(2019, 11)'(2)`=ym(2020, 6)', labsize(small)) ///
-    lw(medthick..) col(ebblue cranberry) msize(small) msym(Oh Sh) ///
-    legend(label(1 "True") label(2 "Extrapolated after 01/2020"))
-graph export "$graphs/02-update-qcew/extrapolation-backtest-employment.pdf", replace
-    
-gr tw con avg_mthly_wages avg_mthly_wages_bt time, by(quartile, note("")) ///
-    ytitle("Average wage (01/2020 = 100)") xtitle("") xlabel(`=ym(2019, 11)'(2)`=ym(2020, 6)', labsize(small)) ///
-    lw(medthick..) col(ebblue cranberry) msize(small) msym(Oh Sh) ///
-    legend(label(1 "True") label(2 "Extrapolated after 01/2020"))
-graph export "$graphs/02-update-qcew/extrapolation-backtest-wage.pdf", replace
-
-// -------------------------------------------------------------------------- //
-// Perform systematic backtesting of CES extrapolation
-// -------------------------------------------------------------------------- //
-
-global date_begin = ym(2007, 12)
-global date_end = ym(2021, 12)
-
-quietly {
-    foreach t of numlist $date_begin (3) $date_end {
-        use id year month time mthly_emplvl avg_mthly_wages chg_mthly_emplvl_pred chg_avg_mthly_wages_pred ///
-            if inrange(time, `t', `t' + 6) using "$work/02-update-qcew/qcew-monthly-updated-backtesting.dta", clear
-        
-        local year = year(dofm(`t'))
-        local month = month(dofm(`t'))
-        
-        // Last value before backtesting
-        generate last_mthly_emplvl_bt = mthly_emplvl if time == `t'
-        generate last_avg_mthly_wages_bt = avg_mthly_wages if time == `t'
-        //sort id year month
-        by id: carryforward last_mthly_emplvl_bt last_avg_mthly_wages_bt, replace
-
-        // Cumulate to get prediction
-        replace chg_mthly_emplvl_pred = 0 if time == `t'
-        replace chg_avg_mthly_wages_pred = 0 if time == `t'
-        by id: generate mthly_emplvl_bt`t' = last_mthly_emplvl_bt*exp(sum(chg_mthly_emplvl_pred))
-        by id: generate avg_mthly_wages_bt`t' = last_avg_mthly_wages_bt*exp(sum(chg_avg_mthly_wages_pred))
-
-        drop last_mthly_emplvl_bt last_avg_mthly_wages_bt chg_mthly_emplvl_pred chg_avg_mthly_wages_pred
-        
-        compress
-        save "$work/02-update-qcew/backtesting-ces/qcew-ces-backtesting`t'.dta", replace
-        
-        noisily di "* `year'm`month'"
-    }
-}
-
-clear
-
-use if version == "NAICS" & inrange(ym(year, month), $date_begin, $date_end + 6) ///
-    using "$work/02-update-qcew/qcew-monthly-updated.dta", clear
-
-// Tabulate
-hashsort year month avg_mthly_wages
-
-by year month: generate rank = sum(mthly_emplvl)
-by year month: replace rank = 1e5*(rank - mthly_emplvl/2)/rank[_N]
-
-egen p = cut(rank), at(0(1000)99000 100001)
-
-gcollapse (mean) avg_mthly_wages [aw=mthly_emplvl], by(year month p)
-
-save "$work/02-update-qcew/backtesting-ces/qcew-ces-backtesting-tabulations.dta", replace
-
-foreach t of numlist $date_begin (3) $date_end {
-    use "$work/02-update-qcew/backtesting-ces/qcew-ces-backtesting`t'.dta", clear
-    
-    // Tabulate
-    hashsort year month avg_mthly_wages_bt`t'
-
-    by year month: generate rank = sum(mthly_emplvl_bt`t')
-    by year month: replace rank = 1e5*(rank - mthly_emplvl_bt`t'/2)/rank[_N]
-
-    egen p = cut(rank), at(0(1000)99000 100001)
-
-    gcollapse (mean) avg_mthly_wages=avg_mthly_wages_bt`t' [aw=mthly_emplvl_bt`t'], by(year month p)
-    
-    generate bt = `t'
-    format bt %tm
-    
-    append using "$work/02-update-qcew/backtesting-ces/qcew-ces-backtesting-tabulations.dta"
-    save "$work/02-update-qcew/backtesting-ces/qcew-ces-backtesting-tabulations.dta", replace
-}
-
-use "$work/02-update-qcew/backtesting-ces/qcew-ces-backtesting-tabulations.dta", clear
-
-generate time = ym(year, month)
-format time %tm
-
-hashsort bt year month
-
-gegen total = total(avg_mthly_wages), by(bt year month)
-generate share = 100*avg_mthly_wages/total
-
-generate bracket = ""
-replace bracket = "bot50" if inrange(p, 0, 49000)
-replace bracket = "top10" if inrange(p, 90000, 100000)
-
-gcollapse (sum) share if year >= 2019, by(year month time bt bracket)
-
-gr tw (line share time if missing(bt) & bracket == "bot50", col(ebblue) lw(medthick)) ///
-    (line share time if bt == 713 & bracket == "bot50", /*col(cranberry)*/ lw(medthick) lp(dash)) ///
-    (line share time if bt == 716 & bracket == "bot50", /*col(cranberry)*/ lw(medthick) lp(dash)) ///
-    (line share time if bt == 719 & bracket == "bot50", /*col(cranberry)*/ lw(medthick) lp(dash)) ///
-    (line share time if bt == 722 & bracket == "bot50", /*col(cranberry)*/ lw(medthick) lp(dash)) ///
-    (line share time if bt == 725 & bracket == "bot50", /*col(cranberry)*/ lw(medthick) lp(dash)) ///
-    (line share time if bt == 728 & bracket == "bot50", /*col(cranberry)*/ lw(medthick) lp(dash)) ///
-    (line share time if bt == 731 & bracket == "bot50", /*col(cranberry)*/ lw(medthick) lp(dash)) ///
-    (line share time if bt == 734 & bracket == "bot50", /*col(cranberry)*/ lw(medthick) lp(dash)), ///
-    xtitle("") ytitle("Bottom 50% wage income share in QCEW (%)") ///
-    legend(label(1 "QCEW") label(2 "Extrapolation from CES") order(1 2)) 
-graph export "$graphs/02-update-qcew/extrapolation-bot50.pdf", replace
-
-gr tw (line share time if missing(bt) & bracket == "top10", col(ebblue) lw(medthick)) ///
-    (line share time if bt == 713 & bracket == "top10", /*col(cranberry)*/ lw(medthick) lp(dash)) ///
-    (line share time if bt == 716 & bracket == "top10", /*col(cranberry)*/ lw(medthick) lp(dash)) ///
-    (line share time if bt == 719 & bracket == "top10", /*col(cranberry)*/ lw(medthick) lp(dash)) ///
-    (line share time if bt == 722 & bracket == "top10", /*col(cranberry)*/ lw(medthick) lp(dash)) ///
-    (line share time if bt == 725 & bracket == "top10", /*col(cranberry)*/ lw(medthick) lp(dash)) ///
-    (line share time if bt == 728 & bracket == "top10", /*col(cranberry)*/ lw(medthick) lp(dash)) ///
-    (line share time if bt == 731 & bracket == "top10", /*col(cranberry)*/ lw(medthick) lp(dash)) ///
-    (line share time if bt == 734 & bracket == "top10", /*col(cranberry)*/ lw(medthick) lp(dash)), ///
-    xtitle("") ytitle("Top 10% wage income share in QCEW (%)") ///
-    legend(label(1 "QCEW") label(2 "Extrapolation from CES") order(1 2)) 
-graph export "$graphs/02-update-qcew/extrapolation-top10.pdf", replace
-

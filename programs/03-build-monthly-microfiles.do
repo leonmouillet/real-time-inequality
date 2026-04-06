@@ -2,16 +2,14 @@
 // Generate monthly DINA files
 // -------------------------------------------------------------------------- //
 
-tempfile cps_changes
-
-global date_begin = ym(2022, 06)
-global date_end   = ym(2022, 06)
-
-global dina_last_year = 2019
+local date_begin = $date_begin
+local date_end   = $date_end
 
 set seed 19920902
 
-foreach t of numlist $date_begin / $date_end {
+tempfile cps_changes
+
+foreach t of numlist `date_begin' / `date_end' {
     
     local year = year(dofm(`t'))
     local month = month(dofm(`t'))
@@ -24,7 +22,7 @@ foreach t of numlist $date_begin / $date_end {
         // ------------------------------------------------------------------ //
         
         // Period covered by DINA microfiles
-        local dina_end = min(`t', ym($dina_last_year, 12))
+        local dina_end = min(`t', ym($last_year_dina, 12))
         local dina_end = max(`dina_end', ym(1976, 12)) // Because the monthly CPS starts in 1976
         local dina_start = `dina_end' - 11
         
@@ -51,7 +49,7 @@ foreach t of numlist $date_begin / $date_end {
         generate employment_rate = ssa_employed_monthly/monthly_adult
         generate frac_ui = ui_claims/monthly_adult
         local employment_rate_target = employment_rate
-        loca frac_ui_target = frac_ui
+        local frac_ui_target = frac_ui
         
         // ------------------------------------------------------------------ //
         // Update DINA microfile
@@ -60,14 +58,14 @@ foreach t of numlist $date_begin / $date_end {
         if (`year' == 1976) {
             use if inlist(year, 1976) using "$work/02-prepare-dina/dina-simplified-normalized.dta", clear
         }
-        else if (`year' <= ${dina_last_year}) {
+        else if (`year' <= ${last_year_dina}) {
             use if inlist(year, `year', `year' - 1) using "$work/02-prepare-dina/dina-simplified-normalized.dta", clear
             replace weight = `month'/12*weight if year == `year'
             replace weight = (1 - `month'/12)*weight if year == `year' - 1
             drop if weight == 0
         }
         else {
-            use if inlist(year, ${dina_last_year}) using "$work/02-prepare-dina/dina-simplified-normalized.dta", clear
+            use if inlist(year, ${last_year_dina}) using "$work/02-prepare-dina/dina-simplified-normalized.dta", clear
         }
         
         // Recalculate IDs to separate tax units with same ID in different years
@@ -455,7 +453,7 @@ foreach t of numlist $date_begin / $date_end {
         rename employed_new employed
         rename has_ui_new has_ui
         
-        save "$work/03-build-monthly-microfiles/microfiles/dina-monthly-`year'm`month'.dta", replace
+        save "$microfiles/$update_id/dina-monthly-`year'm`month'.dta", replace
 
         // ------------------------------------------------------------------ //
         // Interpolate wages to correspond to microdata ranks
@@ -479,13 +477,14 @@ foreach t of numlist $date_begin / $date_end {
         save "$work/03-build-monthly-microfiles/tabul-flemp-gpinter.dta", replace
         
         // Interpolate with gpinter
-        rsource using "$programs/03-interpolate-qcew.R", roptions(`" --vanilla --args "$work/03-build-monthly-microfiles" "')
+        shell "$rscript" --vanilla "$programs/03-interpolate-qcew.R" "$work/03-build-monthly-microfiles"
+
         
         // ------------------------------------------------------------------ //
         // Same for UI benefits
         // ------------------------------------------------------------------ //
         
-        use "$work/03-build-monthly-microfiles/microfiles/dina-monthly-`year'm`month'.dta", clear
+        use "$microfiles/$update_id/dina-monthly-`year'm`month'.dta", clear
         
         // Export ranks to interpolate
         keep if has_ui
@@ -497,18 +496,18 @@ foreach t of numlist $date_begin / $date_end {
         save "$work/03-build-monthly-microfiles/rank-uiinc-gpinter.dta", replace
         
         // Export tabulation to interpolate
-        use if year == min(`year', $dina_last_year) using "$work/02-prepare-ui/dina-ui-dist.dta", clear
+        use if year == min(`year', $last_year_dina) using "$work/02-prepare-ui/dina-ui-dist.dta", clear
         keep p avg_uiinc
         save "$work/03-build-monthly-microfiles/tabul-uiinc-gpinter.dta", replace
         
         // Interpolate with gpinter
-        rsource using "$programs/03-interpolate-uiinc.R", roptions(`" --vanilla --args "$work/03-build-monthly-microfiles" "')
+        shell "$rscript" --vanilla "$programs/03-interpolate-uiinc.R" "$work/03-build-monthly-microfiles"
         
         // ------------------------------------------------------------------ //
         // Incorporate wages and UI benefits into the main file
         // ------------------------------------------------------------------ //
         
-        use "$work/03-build-monthly-microfiles/microfiles/dina-monthly-`year'm`month'.dta", clear 
+        use "$microfiles/$update_id/dina-monthly-`year'm`month'.dta", clear 
         
         merge 1:1 id pid using "$work/03-build-monthly-microfiles/flemp-gpinter.dta", nogenerate assert(master match)
         merge 1:1 id pid using "$work/03-build-monthly-microfiles/uiinc-gpinter.dta", nogenerate assert(master match)
@@ -805,8 +804,8 @@ foreach t of numlist $date_begin / $date_end {
                 mortgage_owner + equ_scorp + equ_nscorp + business + pensions - nonmortage + fixed
                 
         keep year month id top400 weight princ peinc dispo poinc married age sex race educ flemp contrib uiben ///
-            penben surplus proprietors rental profits fkfix govin fknmo corptax ///
-            prodtax prodsub taxes estatetax othercontrib vet othcash medicare ///
+            penben surplus proprietors rental profits fkfix govin fknmo corptax npinc ///
+            prodtax prodsub taxes potax salestax estatetax othercontrib vet othcash medicare ///
             medicaid otherkin colexp prisupenprivate prisupgov govcontrib ///
             covidrelief covidsub surplus_ss housing_tenant housing_owner mortgage_tenant ///
             mortgage_owner equ_scorp equ_nscorp business pensions nonmortage fixed hweal acs
@@ -832,6 +831,37 @@ foreach t of numlist $date_begin / $date_end {
         noisily di "    -> Saving"
         
         compress
-        save "$work/03-build-monthly-microfiles/microfiles/dina-monthly-`year'm`month'.dta", replace
+        save "$microfiles/$update_id/dina-monthly-`year'm`month'.dta", replace
     }
 }
+
+// -------------------------------------------------------------------------- //
+// Create metadata.txt for the current update (based on data-summary.txt)
+// -------------------------------------------------------------------------- //
+
+local metadata_file "$microfiles/$update_id/_metadata.txt"
+local data_summary  "$work/01-data-summary/data-summary.txt"
+
+// Write header
+local dbegin_txt = string($date_begin, "%tm")
+local dend_txt   = string($date_end, "%tm")
+file open meta using "`metadata_file'", write replace text
+file write meta ///
+    "Real-Time Inequality – Metadata" _n ///
+    "Update ID: $update_id" _n ///
+    "Monthly microfiles generated on: `c(current_date)'" _n ///
+    "Months `dbegin_txt' (" "$" "date_begin" ") to `dend_txt' (" "$" "date_end" ")" _n _n
+file close meta
+
+// Append data-summary.txt
+file open meta using "`metadata_file'", write append text
+file open ds   using "`data_summary'", read text
+
+file read ds line
+while (r(eof)==0) {
+    file write meta "`line'" _n
+    file read ds line
+}
+
+file close ds
+file close meta

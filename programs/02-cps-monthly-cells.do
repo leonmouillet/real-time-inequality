@@ -10,7 +10,8 @@
 use "$work/01-import-cps-monthly/cps-monthly.dta", clear
 
 // Weights
-generate earnings_sample = (year >= 1982) & (eligorg == 1) & (earnweek < 9999.99) & (earnwt > 0)
+generate earnings_sample = (year >= 1982) & (eligorg == 1) & (earnwt > 0)
+replace earnings_sample = 0 if (year <= 2022) & (eligorg == 1) & (earnwt > 0) & (earnweek >= 9999.99)
 generate weight = wtfinl
 generate weight_earnings = earnwt if earnings_sample
 

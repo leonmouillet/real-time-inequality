@@ -2,7 +2,7 @@
 // Import financial accounts from the FED
 // -------------------------------------------------------------------------- //
 
-copy "https://www.federalreserve.gov/releases/z1/20210923/z1_csv_files.zip" "$work/01-import-fa/z1_csv_files.zip", replace
+copy "https://www.federalreserve.gov/releases/z1/20260109/z1_csv_files.zip" "$work/01-import-fa/z1_csv_files.zip", replace
 cd "$work/01-import-fa"
 unzipfile "$work/01-import-fa/z1_csv_files.zip", replace
 
@@ -10,7 +10,7 @@ unzipfile "$work/01-import-fa/z1_csv_files.zip", replace
 // Series availalble quarterly
 // -------------------------------------------------------------------------- //
 
-foreach file in b101 b104 l223 l227 l202 l122 l121 b101e l124 l224 l218 l219 l221 l117 l226 l108 {    
+foreach file in b101 b104 l223 l229 l202 l122 l121 b101e l124 l224 l218 l219 l221 l117 l226 l108 l205 l225b {    
     import delimited "$work/01-import-fa/csv/`file'.csv", clear encoding(utf8) varnames(1) stringcols(_all)
 
     split date, parse(":Q") destring
@@ -28,7 +28,7 @@ foreach file in b101 b104 l223 l227 l202 l122 l121 b101e l124 l224 l218 l219 l22
 use "`b101'", clear
 merge 1:1 year quarter using "`b104'", nogenerate
 merge 1:1 year quarter using "`l223'", nogenerate
-merge 1:1 year quarter using "`l227'", nogenerate
+merge 1:1 year quarter using "`l229'", nogenerate
 merge 1:1 year quarter using "`l202'", nogenerate
 merge 1:1 year quarter using "`l122'", nogenerate
 merge 1:1 year quarter using "`l121'", nogenerate
@@ -41,6 +41,8 @@ merge 1:1 year quarter using "`l221'", nogenerate
 merge 1:1 year quarter using "`l117'", nogenerate
 merge 1:1 year quarter using "`l226'", nogenerate
 merge 1:1 year quarter using "`l108'", nogenerate
+merge 1:1 year quarter using "`l205'", nogenerate
+merge 1:1 year quarter using "`l225b'", nogenerate
 
 sort year quarter
 

@@ -107,6 +107,13 @@ drop datestr daten
 rename FEDMINNFRWG fed_minw
 
 sort year month
+replace fed_minw = fed_minw[_n-1] if missing(fed_minw) // Fix potential missing values
 
 save "$work/01-import-minwage/fed-minimum-wage.dta", replace
+
+collapse (mean) fed_minw, by(year)
+
+save "$work/01-import-minwage/fed-minimum-wage-yearly.dta", replace
+
+
 

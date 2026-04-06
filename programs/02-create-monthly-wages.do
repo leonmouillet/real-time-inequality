@@ -187,7 +187,7 @@ replace recession = 1 if inlist(year, 1983, 1992, 2002, 2010)
 
 // Top 1%
 gr tw  (line chg_flemp chg_flemp if bracket == "top1", col(black) lw(medthick)) ///
-    (sc chg_flemp chg_flemp_mthly if bracket == "top1", col(ebblue) msym(O)) if year < 2020, ///
+    (sc chg_flemp chg_flemp_mthly if bracket == "top1", col(ebblue) msym(O)) if year <= $last_year_dina, ///
     aspectratio(1) xsize(4) ysize(4) legend(off) scale(1.2) ///
     xscale(range(-1.5 1.5)) yscale(range(-1.5 1.5)) ///
     xlabel(-1.5(0.5)1.5, format(%2.1f)) ylabel(-1.5(0.5)1.5, format(%2.1f)) ///
@@ -196,7 +196,7 @@ gr tw  (line chg_flemp chg_flemp if bracket == "top1", col(black) lw(medthick)) 
 graph export "$graphs/02-create-monthly-wages/qcew-cps-accuracy-top1-1y.pdf", replace
 
 gr tw  (line chg2_flemp chg2_flemp if bracket == "top1", col(black) lw(medthick)) ///
-    (sc chg2_flemp chg2_flemp_mthly if bracket == "top1", col(ebblue) msym(O)) if year < 2020, ///
+    (sc chg2_flemp chg2_flemp_mthly if bracket == "top1", col(ebblue) msym(O)) if year <= $last_year_dina, ///
     aspectratio(1) xsize(4) ysize(4) legend(off) scale(1.2) ///
     xscale(range(-2 2)) yscale(range(-2 2)) ///
     xlabel(-2(0.5)2, format(%2.1f)) ylabel(-2(0.5)2, format(%2.1f)) ///
@@ -206,7 +206,7 @@ graph export "$graphs/02-create-monthly-wages/qcew-cps-accuracy-top1-2y.pdf", re
 
 // Next 9%
 gr tw  (line chg_flemp chg_flemp if bracket == "next9", col(black) lw(medthick)) ///
-    (sc chg_flemp chg_flemp_mthly if bracket == "next9", col(ebblue) msym(O)) if year < 2020, ///
+    (sc chg_flemp chg_flemp_mthly if bracket == "next9", col(ebblue) msym(O)) if year <= $last_year_dina, ///
     aspectratio(1) xsize(4) ysize(4) legend(off) scale(1.2) ///
     xscale(range(-1.5 1.5)) yscale(range(-1.5 1.5)) ///
     xlabel(-1.5(0.5)1.5, format(%2.1f)) ylabel(-1.5(0.5)1.5, format(%2.1f)) ///
@@ -215,7 +215,7 @@ gr tw  (line chg_flemp chg_flemp if bracket == "next9", col(black) lw(medthick))
 graph export "$graphs/02-create-monthly-wages/qcew-cps-accuracy-next9-1y.pdf", replace
 
 gr tw  (line chg2_flemp chg2_flemp if bracket == "next9", col(black) lw(medthick)) ///
-    (sc chg2_flemp chg2_flemp_mthly if bracket == "next9", col(ebblue) msym(O)) if year < 2020, ///
+    (sc chg2_flemp chg2_flemp_mthly if bracket == "next9", col(ebblue) msym(O)) if year <= $last_year_dina, ///
     aspectratio(1) xsize(4) ysize(4) legend(off) scale(1.2) ///
     xscale(range(-2 2)) yscale(range(-2 2)) ///
     xlabel(-2(0.5)2, format(%2.1f)) ylabel(-2(0.5)2, format(%2.1f)) ///
@@ -225,7 +225,7 @@ graph export "$graphs/02-create-monthly-wages/qcew-cps-accuracy-next9-2y.pdf", r
 
 // Middle 40%
 gr tw  (line chg_flemp chg_flemp if bracket == "mid40", col(black) lw(medthick)) ///
-    (sc chg_flemp chg_flemp_mthly if bracket == "mid40", col(ebblue) msym(O)) if year < 2020, ///
+    (sc chg_flemp chg_flemp_mthly if bracket == "mid40", col(ebblue) msym(O)) if year <= $last_year_dina, ///
     aspectratio(1) xsize(4) ysize(4) legend(off) scale(1.2) ///
     xscale(range(-1.5 1.5)) yscale(range(-1.5 1.5)) ///
     xlabel(-1.5(0.5)1.5, format(%2.1f)) ylabel(-1.5(0.5)1.5, format(%2.1f)) ///
@@ -234,7 +234,7 @@ gr tw  (line chg_flemp chg_flemp if bracket == "mid40", col(black) lw(medthick))
 graph export "$graphs/02-create-monthly-wages/qcew-cps-accuracy-mid40-1y.pdf", replace
 
 gr tw  (line chg2_flemp chg2_flemp if bracket == "mid40", col(black) lw(medthick)) ///
-    (sc chg2_flemp chg2_flemp_mthly if bracket == "mid40", col(ebblue) msym(O)) if year < 2020, ///
+    (sc chg2_flemp chg2_flemp_mthly if bracket == "mid40", col(ebblue) msym(O)) if year <= $last_year_dina, ///
     aspectratio(1) xsize(4) ysize(4) legend(off) scale(1.2) ///
     xscale(range(-2 2)) yscale(range(-2 2)) ///
     xlabel(-2(0.5)2, format(%2.1f)) ylabel(-2(0.5)2, format(%2.1f)) ///
@@ -244,7 +244,7 @@ graph export "$graphs/02-create-monthly-wages/qcew-cps-accuracy-mid40-2y.pdf", r
 
 // Bottom 50%
 gr tw  (line chg_flemp chg_flemp if bracket == "bot50", col(black) lw(medthick)) ///
-    (sc chg_flemp chg_flemp_mthly if bracket == "bot50", col(ebblue) msym(O)) if year < 2020, ///
+    (sc chg_flemp chg_flemp_mthly if bracket == "bot50", col(ebblue) msym(O) mlabel(year) mlabsize(tiny)) if year <= $last_year_dina, ///
     aspectratio(1) xsize(4) ysize(4) legend(off) scale(1.2) ///
     xscale(range(-1.5 1.5)) yscale(range(-1.5 1.5)) ///
     xlabel(-1.5(0.5)1.5, format(%2.1f)) ylabel(-1.5(0.5)1.5, format(%2.1f)) ///
@@ -253,42 +253,13 @@ gr tw  (line chg_flemp chg_flemp if bracket == "bot50", col(black) lw(medthick))
 graph export "$graphs/02-create-monthly-wages/qcew-cps-accuracy-bot50-1y.pdf", replace
 
 gr tw  (line chg2_flemp chg2_flemp if bracket == "bot50", col(black) lw(medthick)) ///
-    (sc chg2_flemp chg2_flemp_mthly if bracket == "bot50", col(ebblue) msym(O)) if year < 2020, ///
+    (sc chg2_flemp chg2_flemp_mthly if bracket == "bot50", col(ebblue) msym(O) mlabel(year) mlabsize(tiny)) if year <= $last_year_dina, ///
     aspectratio(1) xsize(4) ysize(4) legend(off) scale(1.2) ///
     xscale(range(-2 2)) yscale(range(-2 2)) ///
     xlabel(-2(0.5)2, format(%2.1f)) ylabel(-2(0.5)2, format(%2.1f)) ///
     xtitle("QCEW + CPS") ///
     ytitle("Tax Data")
 graph export "$graphs/02-create-monthly-wages/qcew-cps-accuracy-bot50-2y.pdf", replace
-
-// -------------------------------------------------------------------------- //
-// Plot CPS/QCEW consistency
-// -------------------------------------------------------------------------- //
-
-use "$work/02-adjust-seasonality-qcew/qcew-tabulations-sa.dta", clear
-append using "$work/02-cps-monthly-earnings/cps-monthly-earnings.dta"
-
-replace version = "_" + strlower(version)
-rename avg_mthly_wages_sa wage
-merge n:1 year month using "$work/02-prepare-nipa/nipa-simplified-monthly.dta", ///
-    keep(match) nogenerate keepusing(nipa_deflator)
-replace wage = wage/nipa_deflator
-reshape wide wage, i(year month p) j(version) string
-
-generate time = ym(year, month)
-tsset p time, monthly
-
-generate growth_qcew = 100*(wage_naics - L12.wage_naics)/L12.wage_naics
-generate growth_cps = 100*(wage_cps - L12.wage_cps)/L12.wage_cps
-
-tssmooth ma growth_cps_ma = growth_cps, window(3 1 3)
-
-gr tw line growth_cps growth_cps_ma growth_qcew time if p == 25000 & inrange(year, 1992, 2018), ///
-    col(gs13 ebblue cranberry) lw(thin medthick..) xsize(5) ysize(3) scale(1.2) ///
-    legend(pos(3) cols(1) label(1 "raw") label(2 "moving" "average") label(3 "raw") ///
-        order(- "{bf:CPS}" 1 2 - "" - "" - "{bf:QCEW}" 3)) ///
-    xtitle("") ytitle("Year-over-year real growth rate (%)") subtitle("25th Monthly Wage Percentile")
-graph export "$graphs/02-create-monthly-wages/qcew-cps-consistency.pdf", replace
 
 // -------------------------------------------------------------------------- //
 // Plot DINA comparison
@@ -321,26 +292,56 @@ replace time = ym(year, 7) if version == "DINA"
 format time %tm
 
 gr tw ///
-    (sc flemp time if version == "DINA" & bracket == "Top 1%" & year < 2020, msym(Oh) msize(small) lw(medthick) col(cranberry)) ///
+    (sc flemp time if version == "DINA" & bracket == "Top 1%" & inrange(year, 1976, $last_year_dina), msym(Oh) msize(small) lw(medthick) col(cranberry)) ///
+    (line flemp time if version == "QCEW/CPS" & bracket == "Top 1%", col(ebblue) lw(none)), ///
+    ytitle("Top 1% share of wages (%)") xtitle("") xsize(5) ysize(3) yscale(range(0 13)) ylabel(0(2)12) ///
+    note("") legend(pos(3)) scale(1.3) xlabel(`=ym(1980, 1)'(120)`=ym(2020, 1)', alternate) xscale(range(`=ym(1980, 1)' `=ym(2023, 5)')) ///
+    legend(pos(2) ///
+        cols(1) label(2 "") ///
+        label(1 "Annual Tax Data") ///
+        order(1 2) ///
+    )
+graph export "$graphs/02-create-monthly-wages/flemp-dina-qcew-adjustements-1.pdf", replace
+
+gr tw ///
+    (sc flemp time if version == "DINA" & bracket == "Top 1%" & inrange(year, 1976, $last_year_dina), msym(Oh) msize(small) lw(medthick) col(cranberry)) ///
+    (line flemp time if version == "NAICS" & bracket == "Top 1%", col(green) lw(medthick)) ///
+    (line flemp time if version == "SIC" & bracket == "Top 1%", col(orange) lw(medthick)), ///
+    ytitle("Top 1% share of wages (%)") xtitle("") xsize(5) ysize(3) yscale(range(0 13)) ylabel(0(2)12) ///
+    note("") legend(pos(3)) scale(1.3) xlabel(`=ym(1980, 1)'(120)`=ym(2020, 1)', alternate) xscale(range(`=ym(1980, 1)' `=ym(2023, 5)')) ///
+    legend(pos(2) ///
+        cols(1) ///
+        label(1 "Annual Tax Data") ///
+        label(2 "NAICS" "(current version)") ///
+        label(3 "SIC" "(old version)") ///
+        order(1 - "" - "" - "{bf:QCEW}" 2 3) ///
+    )
+graph export "$graphs/02-create-monthly-wages/flemp-dina-qcew-adjustements-2.pdf", replace
+
+gr tw ///
+    (sc flemp time if version == "DINA" & bracket == "Top 1%" & inrange(year, 1976, $last_year_dina), msym(Oh) msize(small) lw(medthick) col(cranberry)) ///
     (line flemp time if version == "QCEW/CPS" & bracket == "Top 1%", col(ebblue) lw(medthick)) ///
     (line flemp time if version == "NAICS" & bracket == "Top 1%", col(green) lw(medthick)) ///
     (line flemp time if version == "SIC" & bracket == "Top 1%", col(orange) lw(medthick)), ///
     ytitle("Top 1% share of wages (%)") xtitle("") xsize(5) ysize(3) yscale(range(0 13)) ylabel(0(2)12) ///
-    note("") legend(pos(3)) scale(1.3) xlabel(`=ym(1980, 1)'(120)`=ym(2020, 1)', alternate) xscale(range(`=ym(1980, 1)' `=ym(2022, 5)')) ///
-    legend(pos(3) ///
+    note("") legend(pos(3)) scale(1.3) xlabel(`=ym(1980, 1)'(120)`=ym(2020, 1)', alternate) xscale(range(`=ym(1980, 1)' `=ym(2023, 5)')) ///
+    legend(pos(2) ///
         cols(1) label(2 "Adjusted") ///
         label(1 "Annual Tax Data") ///
         label(3 "NAICS" "(current version)") ///
         label(4 "SIC" "(old version)") ///
-        order(1 - "" - "" - "{bf:QCEW}" 2 3 4) ///
+        order(1 - "" - "" - "{bf:QCEW}" 3 4 2) ///
     )
-graph export "$graphs/02-create-monthly-wages/flemp-dina-qcew-adjustements.pdf", replace
+graph export "$graphs/02-create-monthly-wages/flemp-dina-qcew-adjustements-3.pdf", replace
+
+
     
 gr tw /// ///
     (line flemp time if version == "QCEW/CPS", col(ebblue) lw(medthick)) ///
-    (scatter flemp time if version == "DINA" & year < 2020, msym(Oh) msize(small) col(cranberry)), ///
+    (scatter flemp time if version == "DINA" & year <= $last_year_dina, msym(Oh) msize(small) col(cranberry)), ///
     ytitle("share of wage income (%)") xtitle("") xsize(5.5) ysize(3) ///
     by(bracket, rescale note("") scale(1.4) rows(2)) ///
+    xlabel(`=ym(1960,1)'(240)`=ym(2020,1)') ///
     legend(pos(6) bmargin(zero) ///
         cols(2) label(1 "QCEW + CPS [Monthly]") ///
         label(2 "Public-use Tax Data [Yearly]") ///
@@ -349,9 +350,9 @@ gr tw /// ///
 graph export "$graphs/02-create-monthly-wages/flemp-dina-qcew.pdf", replace
 
 gr tw ///
-    (sc flemp time if version == "DINA" & bracket == "Top 1%" & year < 2020, msym(Oh) msize(small) lw(medthick) col(cranberry)), ///
+    (sc flemp time if version == "DINA" & bracket == "Top 1%" & year <= $last_year_dina, msym(Oh) msize(small) lw(medthick) col(cranberry)), ///
     ytitle("Top 1% share of wages (%)") xtitle("") xsize(4) ysize(3)  yscale(range(5 13)) ylabel(5(1)13) ///
-    note("") legend(pos(3)) scale(1.3) xlabel(`=ym(1980, 1)'(120)`=ym(2020, 1)') xscale(range(`=ym(1980, 1)' `=ym(2022, 5)')) ///
+    note("") legend(pos(3)) scale(1.3) xlabel(`=ym(1980, 1)'(120)`=ym(2020, 1)') xscale(range(`=ym(1980, 1)' `=ym(2023, 5)')) ///
     legend(pos(6) ///
         rows(1) ///
         label(1 "Annual Tax Data") ///
@@ -360,10 +361,10 @@ gr tw ///
 graph export "$graphs/02-create-monthly-wages/flemp-dina-qcew-top1-step1.pdf", replace
 
 gr tw ///
-    (sc flemp time if version == "DINA" & bracket == "Top 1%" & year < 2020, msym(Oh) msize(small) lw(medthick) col(cranberry)) ///
-    (line flemp time if version == "QCEW/CPS" & bracket == "Top 1%", col(ebblue) lw(medthick))  ///
+    (sc flemp time if version == "DINA" & bracket == "Top 1%" & year <= $last_year_dina, msym(Oh) msize(small) lw(medthick) col(cranberry)) ///
+    (line flemp time if version == "QCEW/CPS" & bracket == "Top 1%", col(ebblue) lw(medthick)), ///
     ytitle("Top 1% share of wages (%)") xtitle("") xsize(4) ysize(3) yscale(range(5 13)) ylabel(5(1)13) ///
-    note("") legend(pos(3)) scale(1.3) xlabel(`=ym(1980, 1)'(120)`=ym(2020, 1)') xscale(range(`=ym(1980, 1)' `=ym(2022, 5)')) ///
+    note("") legend(pos(3)) scale(1.3) xlabel(`=ym(1980, 1)'(120)`=ym(2020, 1)') xscale(range(`=ym(1980, 1)' `=ym(2023, 5)')) ///
     legend(pos(6) ///
         rows(1) label(2 "Monthly (QCEW)") ///
         label(1 "Annual Tax Data") ///

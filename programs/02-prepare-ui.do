@@ -99,25 +99,17 @@ save "`ui_dates'", replace
 
 // Calculate number of people receiving UI benefits by year
 use "$work/01-import-dina/dina-full.dta", clear
-
-summarize year, meanonly
-global dina_last_year = r(max)
-
 keep if year >= 1976
 gegen uiinc = mean(uiinc), by(year id) replace
-
 generate dina_ui_claims = (uiinc > 0)
 gcollapse (sum) dina_ui_claims [pw=dweght], by(year)
-
 tempfile dina_ui
 save "`dina_ui'", replace
 
 // Adjust weekly UI data using DINA data
 use "$work/02-prepare-ui/ui-data-sa.dta", clear
-
 gcollapse (mean) ui_claims, by(year)
 merge 1:1 year using "`dina_ui'", nogenerate
-
 tsset year, yearly
 
 generate chg_dina_ui_claims = log(dina_ui_claims) - log(L.dina_ui_claims)

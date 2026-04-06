@@ -8,6 +8,7 @@ cap mkdir "$transport/cps"
 clear
 save "$work/01-import-transport-cps/cps-transport-summary.dta", replace emptyok
 
+
 // -------------------------------------------------------------------------- //
 // Import the data
 // -------------------------------------------------------------------------- //
@@ -17,43 +18,47 @@ quietly infix                ///
   int     year      1-4      ///
   long    serial    5-9      ///
   byte    month     10-11    ///
-  str     cpsid     12-25    ///
+  double  cpsid     12-25    ///
   byte    asecflag  26-26    ///
   byte    hflag     27-27    ///
-  double  asecwth   28-37    ///
-  byte    pernum    38-39    ///
-  str     cpsidp    40-53    ///
-  double  asecwt    54-63    ///
-  byte    age       64-65    ///
-  byte    sex       66-66    ///
-  int     race      67-69    ///
-  byte    sploc     70-71    ///
-  int     hispan    72-74    ///
-  byte    empstat   75-76    ///
-  int     educ      77-79    ///
-  double  incwage   80-87    ///
-  double  incbus    88-95    ///
-  double  incfarm   96-103   ///
-  long    incss     104-109  ///
-  long    incwelfr  110-115  ///
-  long    incgov    116-120  ///
-  double  incretir  121-128  ///
-  long    incdrt    129-133  ///
-  long    incint    134-140  ///
-  long    incunemp  141-146  ///
-  long    incwkcom  147-152  ///
-  long    incvet    153-159  ///
-  long    incdivid  160-166  ///
-  long    incrent   167-173  ///
-  long    incrann   174-179  ///
-  long    incpens   180-186  ///
+  double  asecwth   28-38    ///
+  byte    pernum    39-40    ///
+  double  cpsidp    41-54    ///
+  double  cpsidv    55-69    ///
+  double  asecwt    70-80    ///
+  byte    age       81-82    ///
+  byte    sex       83-83    ///
+  int     race      84-86    ///
+  byte    sploc     87-88    ///
+  int     hispan    89-91    ///
+  byte    empstat   92-93    ///
+  int     educ      94-96    ///
+  double  incwage   97-104   ///
+  double  incbus    105-112  ///
+  double  incfarm   113-120  ///
+  long    incss     121-126  ///
+  long    incwelfr  127-132  ///
+  long    incgov    133-137  ///
+  double  incretir  138-145  ///
+  long    incdrt    146-150  ///
+  long    incint    151-157  ///
+  long    incunemp  158-163  ///
+  long    incwkcom  164-169  ///
+  long    incvet    170-176  ///
+  long    incdivid  177-183  ///
+  long    incrent   184-190  ///
+  long    incrann   191-197  ///
+  long    incpens   198-204  ///
   using "$rawdata/cps-data/cps.dat"
 
 replace asecwth  = asecwth  / 10000
 replace asecwt   = asecwt   / 10000
 
-format asecwth  %10.4f
-format asecwt   %10.4f
+format cpsid    %14.0f
+format asecwth  %11.4f
+format cpsidp   %14.0f
+format cpsidv   %15.0f
+format asecwt   %11.4f
 format incwage  %8.0f
 format incbus   %8.0f
 format incfarm  %8.0f
@@ -68,6 +73,7 @@ label var hflag    `"Flag for the 3/8 file 2014"'
 label var asecwth  `"Annual Social and Economic Supplement Household weight"'
 label var pernum   `"Person number in sample unit"'
 label var cpsidp   `"CPSID, person record"'
+label var cpsidv   `"Validated Longitudinal Identifier"'
 label var asecwt   `"Annual Social and Economic Supplement Weight"'
 label var age      `"Age"'
 label var sex      `"Sex"'
@@ -326,6 +332,36 @@ label define educ_lbl 125 `"Doctorate degree"', add
 label define educ_lbl 999 `"Missing/Unknown"', add
 label values educ educ_lbl
 
+label define incwage_lbl 99999999 `"NIU"'
+label define incwage_lbl 99999998 `"Missing"', add
+label values incwage incwage_lbl
+
+label define incbus_lbl 99999999 `"NIU"'
+label define incbus_lbl 99999998 `"Missing (1962-1964 only)"', add
+label values incbus incbus_lbl
+
+label define incfarm_lbl 99999999 `"NIU"'
+label define incfarm_lbl 99999998 `"Missing"', add
+label values incfarm incfarm_lbl
+
+label define incwelfr_lbl 999999 `"NIU"'
+label values incwelfr incwelfr_lbl
+
+label define incretir_lbl 99999999 `"NIU"'
+label values incretir incretir_lbl
+
+label define incint_lbl 9999999 `"NIU"'
+label values incint incint_lbl
+
+label define incunemp_lbl 999999 `"NIU"'
+label values incunemp incunemp_lbl
+
+label define incdivid_lbl 9999999 `"NIU"'
+label values incdivid incdivid_lbl
+
+label define incrent_lbl 9999999 `"NIU"'
+label values incrent incrent_lbl
+
 // -------------------------------------------------------------------------- //
 // Clean it up
 // -------------------------------------------------------------------------- //
@@ -339,6 +375,9 @@ foreach v of varlist asecwt asecwth {
 
 // Keep only people 20+
 keep if age >= 20
+
+// Fix typo in input file
+replace incretir = 0 if year >= 2019 & age < 58
 
 // Income variables
 generate cps_wage  = incwage
@@ -376,7 +415,7 @@ recode educ ///
     
 rename asecwt weight
 
-keep if inrange(year, 1976, 2020)
+keep if inrange(year, 1975 + 1, $last_year_dina + 1) // We need data from 1975 to $last_dina_year, and income is for the year T-1.
 
 keep year serial pernum sploc weight *_cps cps_*
 label drop _all
@@ -456,7 +495,7 @@ keep year id weight old married employed cps_*
 // Export CSVs
 levelsof year, local(yrs)
 foreach yr of numlist `yrs' {
-    export delimited id weight old married employed cps_* using "$transport/cps/cps`yr'.csv" if year == `yr', replace
+    export delimited id weight old married employed cps_* using "$work/02-transport/cps/cps`yr'.csv" if year == `yr', replace
 }
 
 // Check that all cells are represented

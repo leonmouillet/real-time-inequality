@@ -6,7 +6,7 @@ if (!require("pacman")) {
     install.packages("pacman")
 }
 library(pacman)
-library(gpinter)
+# library(gpinter)
 
 p_load(dplyr)
 p_load(magrittr)
@@ -21,7 +21,7 @@ work_dir <- commandArgs(trailingOnly=TRUE)[1]
 
 ssa_tables <- NULL
 
-for (yr in 1991:2020) {
+for (yr in 1991:2023) {
     # Scrap wages table
     url <- glue("https://www.ssa.gov/cgi-bin/netcomp.cgi?year={yr}")
     ssa_page <- read_html(url)
@@ -45,4 +45,4 @@ for (yr in 1991:2020) {
     ssa_tables <- bind_rows(ssa_tables, wage_table)
 }
 
-write_dta(ssa_tables, file.path(work_dir, "01-import-ssa-wages", "ssa-tables.dta"))
+write_dta(ssa_tables, file.path(work_dir, "01-import-ssa", "ssa-tables.dta"))

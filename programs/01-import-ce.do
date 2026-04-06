@@ -2,8 +2,31 @@
 // Import BLS Employment, Hours, and Earnings (National, NAICS)
 // -------------------------------------------------------------------------- //
 
-import delimited "https://download.bls.gov/pub/time.series/ce/ce.data.0.AllCESSeries", ///
-    varnames(1) delimiter("\t") clear encoding(utf8)
+// Retrieve BLS employment data via Python 
+clear
+tempfile ce
+python: 
+import pandas as pd
+import requests
+from io import StringIO
+url = "https://download.bls.gov/pub/time.series/ce/ce.data.0.AllCESSeries"
+headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+resp = requests.get(url, headers=headers)
+resp.raise_for_status()
+df = pd.read_csv(StringIO(resp.text), sep="\t", low_memory=False)
+df.to_csv(r"`ce'", index=False)
+end
+
+import delimited "`ce'", varnames(1) delimiter(",") clear encoding(utf8)
+
+// Fallback manual option if automatic download fails:
+//   - Download the file manually from:
+//       <https://download.bls.gov/pub/time.series/ce/ce.data.0.AllCESSeries>
+//     and save it as a text file with a .txt extension.
+//   - Store it under "$rawdata/bls-data/ce.data.0.AllCESSeries.txt"
+//   - Load the file in Stata using:
+//       import delimited "$rawdata/bls-data/ce.data.0.AllCESSeries.txt", //
+//       varnames(1) delimiter("\t") clear encoding(utf8)
 
 destring value, ignore("- ") replace
 destring period, ignore("M") replace

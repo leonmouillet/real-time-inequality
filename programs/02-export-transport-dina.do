@@ -5,10 +5,15 @@
 cap mkdir "$transport"
 cap mkdir "$transport/dina"
 
+
+use "$work/02-add-ssa-wages/dina-ssa-full.dta", clear
+tempfile ssa_data
+save "`ssa_data'"
+
 clear
 save "$work/02-export-transport-dina/dina-transport-summary.dta", replace emptyok
 
-foreach year of numlist 1975/2019 {
+foreach year of numlist 1975/$last_year_dina {
     di "* `year'"
     quietly {
         use "$rawdata/dina-data/microfiles/usdina`year'.dta", clear
@@ -34,8 +39,14 @@ foreach year of numlist 1975/2019 {
         generate year = `year'
         
         // Use DINA files adjusted with SSA data for the "employed" dummy
-        merge 1:1 year id female using "$work/02-add-ssa-wages/dina-ssa-full.dta", nogenerate ///
-            keep(master match) assert(match using) keepusing(flemp_ssa flsup_ssa flwag_ssa)
+		preserve
+			use "`ssa_data'" if year == `year', clear
+			tempfile ssa_year
+			save "`ssa_year'"
+		restore
+
+		merge 1:1 year id female using "`ssa_year'", ///
+            nogenerate keep(master match) keepusing(flemp_ssa flsup_ssa flwag_ssa)
         generate employed = (flemp_ssa > 0)
         
         // Export univariate distributions
@@ -56,7 +67,7 @@ foreach year of numlist 1975/2019 {
                 generate dina_bot50_`stub' = `v'*inrange(rank, 0, 0.5)
                 generate dina_top10_`stub' = `v'*inrange(rank, 0.9, 1)
                 
-                gcollapse (sum) `v' dina_bot50_`stub' dina_top10_`stub' dina_has_`stub' (rawsum) pop=weight [pw=weight], by(year)
+                gcollapse (sum) `v' dina_bot50_`stub' dina_top10_`stub' dina_has_`stub' (rawsum) pop=weight [pw=weight], by(year) fast
                 
                 replace dina_bot50_`stub' = 100*dina_bot50_`stub'/`v'
                 replace dina_top10_`stub' = 100*dina_top10_`stub'/`v'
@@ -80,10 +91,10 @@ foreach year of numlist 1975/2019 {
         restore
         
         // Collapse by households for matching
-        gcollapse (first) married (max) old (sum) employed (sum) dina_* (mean) weight, by(id)
+        gcollapse (first) married (max) old (sum) employed (sum) dina_* (mean) weight, by(id) fast
         
         // Export as CSV for use in Python
-        export delimited "$transport/dina/usdina`year'.csv", replace nolabel
+        export delimited "$work/02-transport/dina/usdina`year'.csv", replace nolabel
         
         // Check that all cells are represented
         preserve

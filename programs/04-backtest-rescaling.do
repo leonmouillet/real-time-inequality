@@ -13,13 +13,13 @@ save "$work/04-backtest-rescaling/backtest-hweal.dta", replace emptyok
 // Backtest, 1-year ahead
 // -------------------------------------------------------------------------- //
 
-global date_begin = ym(1977, 01)
-global date_end   = ym(2019, 12)
+local date_begin = ym(1977, 01)
+local date_end   = ym(2024, 12)
 
 quietly {
-    foreach unit in "household" "individual" "equal-split" {
-        foreach v in princ peinc dispo poinc hweal {
-            foreach t of numlist $date_begin / $date_end {
+    foreach unit in /*"household" "individual"*/ "equal-split" {
+        foreach v in princ /*peinc dispo poinc hweal*/ {
+            foreach t of numlist `date_begin' / `date_end' {
                 local year = year(dofm(`t'))
                 local month = month(dofm(`t'))
                 
@@ -64,13 +64,13 @@ quietly {
 // Backtest, 2-year ahead
 // -------------------------------------------------------------------------- //
 
-global date_begin = ym(1977, 01)
-global date_end   = ym(2019, 12)
+local date_begin = ym(1977, 01)
+local date_end   = ym(2024, 12)
 
 quietly {
-    foreach unit in "household" "individual" "equal-split" {
-        foreach v in princ peinc dispo poinc hweal {
-            foreach t of numlist $date_begin / $date_end {
+    foreach unit in /*"household" "individual"*/ "equal-split" {
+        foreach v in princ /*peinc dispo poinc hweal*/ {
+            foreach t of numlist `date_begin' / `date_end' {
                 local year = year(dofm(`t'))
                 local month = month(dofm(`t'))
                 
@@ -117,12 +117,12 @@ quietly {
 
 // Reference
 use "$work/04-backtest/dina-yearly-princ.dta", clear
-merge 1:1 year bracket unit using "$work/04-backtest/dina-yearly-peinc.dta", nogenerate assert(match)
-merge 1:1 year bracket unit using "$work/04-backtest/dina-yearly-dispo.dta", nogenerate assert(match)
-merge 1:1 year bracket unit using "$work/04-backtest/dina-yearly-poinc.dta", nogenerate assert(match)
-merge 1:1 year bracket unit using "$work/04-backtest/dina-yearly-hweal.dta", nogenerate assert(match)
+*merge 1:1 year bracket unit using "$work/04-backtest/dina-yearly-peinc.dta", nogenerate assert(match)
+*merge 1:1 year bracket unit using "$work/04-backtest/dina-yearly-dispo.dta", nogenerate assert(match)
+*merge 1:1 year bracket unit using "$work/04-backtest/dina-yearly-poinc.dta", nogenerate assert(match)
+*merge 1:1 year bracket unit using "$work/04-backtest/dina-yearly-hweal.dta", nogenerate assert(match)
 
-renvars princ peinc dispo poinc hweal, prefix(average)
+renvars princ /*peinc dispo poinc hweal*/, prefix(average)
 reshape long average, i(year unit bracket) j(income) string
 generate lag = 99
 
@@ -135,12 +135,12 @@ save "`ref'", replace
 
 // Backtesting datasets (full)
 use "$work/04-backtest/backtest-princ.dta", clear
-merge 1:1 year month bracket unit lag using "$work/04-backtest/backtest-peinc.dta", nogenerate assert(match)
-merge 1:1 year month bracket unit lag using "$work/04-backtest/backtest-dispo.dta", nogenerate assert(match)
-merge 1:1 year month bracket unit lag using "$work/04-backtest/backtest-poinc.dta", nogenerate assert(match)
-merge 1:1 year month bracket unit lag using "$work/04-backtest/backtest-hweal.dta", nogenerate assert(match)
+*merge 1:1 year month bracket unit lag using "$work/04-backtest/backtest-peinc.dta", nogenerate assert(match)
+*merge 1:1 year month bracket unit lag using "$work/04-backtest/backtest-dispo.dta", nogenerate assert(match)
+*merge 1:1 year month bracket unit lag using "$work/04-backtest/backtest-poinc.dta", nogenerate assert(match)
+*merge 1:1 year month bracket unit lag using "$work/04-backtest/backtest-hweal.dta", nogenerate assert(match)
 
-renvars princ peinc dispo poinc hweal, prefix(average)
+renvars princ /*peinc dispo poinc hweal*/, prefix(average)
 reshape long average, i(year month unit bracket lag) j(income) string
 collapse (mean) average, by(year unit bracket income lag)
 
@@ -151,12 +151,12 @@ save "`full'", replace
 
 // Backtesting datasets (rescaling)
 use "$work/04-backtest-rescaling/backtest-princ.dta", clear
-merge 1:1 year month bracket unit lag using "$work/04-backtest-rescaling/backtest-peinc.dta", nogenerate assert(match)
-merge 1:1 year month bracket unit lag using "$work/04-backtest-rescaling/backtest-dispo.dta", nogenerate assert(match)
-merge 1:1 year month bracket unit lag using "$work/04-backtest-rescaling/backtest-poinc.dta", nogenerate assert(match)
-merge 1:1 year month bracket unit lag using "$work/04-backtest-rescaling/backtest-hweal.dta", nogenerate assert(match)
+*merge 1:1 year month bracket unit lag using "$work/04-backtest-rescaling/backtest-peinc.dta", nogenerate assert(match)
+*merge 1:1 year month bracket unit lag using "$work/04-backtest-rescaling/backtest-dispo.dta", nogenerate assert(match)
+*merge 1:1 year month bracket unit lag using "$work/04-backtest-rescaling/backtest-poinc.dta", nogenerate assert(match)
+*merge 1:1 year month bracket unit lag using "$work/04-backtest-rescaling/backtest-hweal.dta", nogenerate assert(match)
 
-renvars princ peinc dispo poinc hweal, prefix(average)
+renvars princ /*peinc dispo poinc hweal*/, prefix(average)
 reshape long average, i(year month unit bracket lag) j(income) string
 collapse (mean) average, by(year unit bracket income lag)
 

@@ -3,7 +3,6 @@
 // -------------------------------------------------------------------------- //
 
 use "$work/02-update-qcew/qcew-monthly-updated.dta", clear
-*use "$work/02-disaggregate-qcew/qcew-monthly.dta", clear
 
 // Convert back to nominal
 merge n:1 year month using "$work/01-import-cu/bls-cpi.dta", ///

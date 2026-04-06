@@ -1,8 +1,8 @@
-# Replication package for "Real-Time Inequality" (Blanchet, Saez and Zucman, 2022)
+# Replication package for "Real-Time Inequality" (Blanchet, Saez and Zucman, 2023)
 
 ## Overview
 
-The code in this replication package constructs the synthetic microfiles that can be used to replicate the inequality data available online at [realtimeinequality.org](https://realtimeinequality.org/) as well as the accompanying paper "Real-Time Inequality" (Blanchet, Saez and Zucman, 2022). It combines data from a large number of sources (detailed below). The master file and most of the code runs in Stata with some parts of the code written in R and in Python.
+The code in this replication package constructs the synthetic microfiles that can be used to replicate the inequality data available online at [realtimeinequality.org](https://realtimeinequality.org/) as well as the accompanying paper "Real-Time Inequality" (Blanchet, Saez and Zucman, 2023). It combines data from a large number of sources (detailed below). The master file and most of the code runs in Stata with some parts of the code written in R and in Python.
 
 ## Data Availability and Provenance Statements
 
@@ -62,7 +62,7 @@ The distributional national accounts data comes from [Piketty, Saez and Zucman (
 
 #### Wage Statistics from the Social Security Administration
 
-We use the yearly wage statistics from the Social Security Administration (SSA), available at <https://www.ssa.gov/cgi-bin/netcomp.cgi>. The data is in the public domain. It is automatically downloaded by `01-import-ssa-wages.R` and is stored in the repository under `work-data/01-import-ssa-wages`.
+We use the yearly wage statistics from the Social Security Administration (SSA), available at <https://www.ssa.gov/cgi-bin/netcomp.cgi>. The data is in the public domain. It is automatically downloaded by `01-import-ssa.R` and is stored in the repository under `work-data/01-import-ssa`.
 
 Additional historical data (on the number of wage earners only) was retrieved by hand from <https://www.ssa.gov/oact/cola/oldawidata.html> and <https://www.ssa.gov/oact/cola/awidevelop.html>. This data is only for the historical period and does not need to be updated. The data is in the Excel file `raw-data/ssa-data/number-wage-earners.xlsx` with is provided in the repository.
 
@@ -92,9 +92,9 @@ The Quarterly Census of Employment and Wages comes from the BLS. The data is in 
 
 The Real-Time data on billionaires comes from Forbes. The data is publicly available. It is automatically scrapped from the [the Internet Archive](https://archive.org/) by the Python script `01-scrape-forbes.py` and stored in the repository under `raw-data/forbes-data`.
 
-#### Wilshire 5000 Total Market Index (Wilshire Associates, via FRED)
+#### Wilshire 5000 Total Market Index (Wilshire Associates, via Yahoo Finance)
 
-The Wilshire 5000 Total Market Index is obtained via FRED (series `WILL5000IND`). The data is automatically downloaded by `01-import-wealth-indexes.do` and is stored in the repository under `work-data/01-import-wealth-indexes`.
+The Wilshire 5000 Total Market Index is obtained from Yahoo Finance (as of June 2024, FRED removed the `WILL5000IND` series from public access). Daily data is automatically scraped by `01-scrape-yahoo.py` and stored under `raw-data/yahoo-data/w5000.csv`. Historical data prior to 1989 comes from FRED and is stored under `raw-data/fred-data/historical-fred-data.dta`. Both series are merged and stored in the repository under `work-data/01-import-wealth-indexes`.
 
 #### Case-Shiller National Home Price Index (via FRED)
 
@@ -220,36 +220,46 @@ The Survey of Consumer Finances microdata comes from the Federal Reserve. The da
 
 ### Software Requirements
 
-- Stata 16
+- Stata 16 or later
   - `gtools` (version 1.5.1)
   - `ftools` (version 2.37.0)
   - `grstyle` (version 1.1.0)
-  - `renvars` (version 2.4.0)
+  - `renvars` (installed via `dm88_1` from the Stata Journal)
   - `ereplace` (version 1.0.3)
   - `enforce` (version 1.0)
   - `reghdfe` (version 5.7.3)
   - `_gwtmean` (version 1.0.0)
   - `denton` (version 1.2.1)
-  - The program `00-setup.do` will install all dependencies, alonside setting appropriate paths, etc. It should be run first every time.
-- Python 3.8.3
-  - `ot` (version 0.8.1.0)
-  - `numpy` (version 1.22.2)
-  - `scipy` (version 1.4.1)
-  - `pandas` (version 1.2.4)
-- R 4.0.1
-  - `pacman` (version 0.5.1)
-  - `gpinter` (version 0.0.0.9000)
-  - `dplyr` (version 1.0.7)
-  - `magrittr` (version 1.5)
-  - `rvest` (version 0.3.6)
-  - `glue` (version 1.4.1)
-  - `stringr` (version 1.4.0)
-  - `readr` (version 2.1.2)
-  - `purrr` (version 0.3.4)
-  - `haven` (version 2.3.1)
-  - Each R file uses `pacman` to load packages, which automatically install packages if necessary. The exception is for `gpinter`, which needs to be installed from its Github repository. See <https://github.com/thomasblanchet/gpinter>.
-
-The portion of the code in Python is meant to run on [Slurm](https://slurm.schedmd.com/documentation.html), which requires light bash scripting. This may requires a Unix-type system.
+  - `carryforward`
+  - `egenmore`
+  - `pshare`
+  - `listtab`
+  - The program `00-setup.do` will install all dependencies, alongside setting appropriate paths, etc. It should be run first every time.
+- Python 3.13
+  - `POT` (Python Optimal Transport)
+  - `numpy`
+  - `scipy`
+  - `pandas`
+  - `numba`
+  - `joblib`
+  - `yfinance`
+  - `waybackpy`
+  - `matplotlib`
+  - `requests`
+- R 4.5.1
+  - `pacman`
+  - `gpinter`
+  - `dplyr`
+  - `magrittr`
+  - `rvest`
+  - `glue`
+  - `stringr`
+  - `readr`
+  - `purrr`
+  - `haven`
+  - `ggplot2`
+  - `FNN`
+  - Each R file uses `pacman` to load packages, which automatically installs packages if necessary. The exception is for `gpinter`, which needs to be installed from its Github repository. See <https://github.com/world-inequality-database/gpinter>.
 
 ### Controlled Randomness
 
@@ -283,14 +293,17 @@ Portions of the code (the optimal transport algorithms) were last run on a **8-c
 ## Description of programs/code
 
 - The folder `raw-data` contains the raw input data, primarily in cases where direct download/scraping is not possible or not justified, or in cases where data files are heavy (like the QCEW) and therefore downloading them over the internet every time is not desirable.
-- The folder `work-data` contains intermediary data files that are produced by the code. It is divided into subfolders corresponding to each code file, and no intermediary data file is may be changed by two distinct code files.
-- The folder `graphs` contains the all the figures (and a few tables) generated by the code. It is divided into subfolders corresponding to each code file.
-- The folder `programs` contains the codes (except those performing the optimal transport).
+- The folder `work-data` contains intermediary data files that are produced by the code. It is divided into subfolders corresponding to each code file, and no intermediary data file may be changed by two distinct code files.
+- The folder `outputs` contains all final outputs generated by the code, organized into four subfolders:
+  - `outputs/graphs`: figures produced by the code, divided into subfolders by program.
+  - `outputs/tables`: tables produced by the code, divided into subfolders by program.
+  - `outputs/microfiles`: versioned synthetic microfiles produced by `03-build-monthly-microfiles.do`.
+  - `outputs/website`: versioned data files used by the website, produced by the `03-build-online-database*.do` scripts.
+- The folder `programs` contains all the code.
   - The codes named `programs/01-*` handle the retrieval of the raw data, either directly from the internet or from the folder `raw-data`.
   - The codes named `programs/02-*` handle preliminary treatments of the data.
   - The codes named `programs/03-*` produce the synthetic microfiles and related outputs.
   - The codes named `programs/04-*` produce the figures and tables used for the analysis.
-- The folder `transport` contains the code and data specifically related to the optimal transport: it is meant to run separately from the main code on a computing cluster.
 
 ### License for Code
 
@@ -300,28 +313,23 @@ The code is licensed under the [Modified BSD License](https://opensource.org/lic
 
 ## Instructions to Replicators
 
-- Edit the `$root` global in `programs/00-setup.do` to correspond to the project's directory.
-- Run the file `programs/00-run.do`.
-- To also run the transport, run programs until `programs/02-export-transport-dina.do` and then execute the Python code under `transport/transport.py` preferably using [Slurm](https://slurm.schedmd.com/documentation.html) and the Shell script `transport/transport.sh`. Then resume the execution of `programs/00-run.do`.
+- Edit the local configuration section of `programs/00-setup.do` to set `$root`, `$rscript`, and `$pythonscript` for your computing environment.
+- Run `programs/00-setup.do` once at the start of each Stata session to install dependencies and set paths.
+- Run `programs/00-run.do`. 
 
 ### Details
 
 - `programs/01-*`
   - The codes retrieve the data from the internet directly to the extent that it is possible.
-  - Unless there has been changes in the structure of the data, they should run without any change for each update.
+  - Unless there have been changes in the structure of the data, they should run without any change for each update.
   - In some cases, the data needs to be manually updated in the `raw-data` folder at each update.
-  - Instruction for each file in included in `00-run.do`.
+  - Instructions for each file are included in `00-run.do`.
+  - Once all imports are completed, run `01-data-summary.do` to produce a summary of data coverage by source (`work-data/01-data-summary/data-summary.txt`). The summary reports the most recent month for which a monthly microfile can be produced, which can be used to set `$date_end` in `00-setup.do`.
 - `programs/02-*`
   - The codes primarily generate data in the `work-data` folder that is used to generate the synthetic microfiles.
-- `transport`
-  - This folder includes the data and code necessary for the optimal transport.
-  - These codes are meant to run on the computing cluster.
-  - They do not need to be updated every time (only when new tax microdata is available).
-  - The CSV data files included in this folder are produced by the codes before.
 - `programs/03-*`
-  - The codes in that folder produce the synthetic microfiles, including backtesting versions of the microfiles that use older tax data, and rescaling versions that only use information on macro aggregates.
-  - The globals `$date_begin` and `$date_end` at the beginning of these files can be used to generate only the files for specific months. This can be useful since not all the files need to be constructed for every update.
-  - Codes in that section also produce the aggregated version of the database by group that is used for the website <http://realtimeinequality.org/>. These files are stored in the folder `website`.
+  - The codes produce the synthetic microfiles, including backtesting versions of the microfiles that use older tax data, and rescaling versions that only use information on macro aggregates.
+  - Codes in that section also produce the databases that are used for the website <http://realtimeinequality.org/>. These files are stored in the folder `outputs/website`.
 - `programs/04-*`
   - Use the microfiles and related outputs to create the tables and figures included in the paper (see below).
 
@@ -333,47 +341,57 @@ The provided code reproduces:
 - [x] All tables and figures in the paper
 - [ ] Selected tables and figures in the paper, as explained and justified below.
 
-Note that program files are under `programs` and graphs/tables are under `graphs` in the folder with the same name as the program file.
+Note that program files are under `programs`, graphs are under `outputs/graphs`, and tables are under `outputs/tables`, each in a subfolder with the same name as the program file.
 
-| Figure/Table # | Program                     | Output file                      |
-|----------------|-----------------------------|----------------------------------|
-| Figure 1       | 02-create-monthly-wages.do  | flemp-dina-qcew.pdf              |
-| Figure 2a      | 02-prepare-dina.do          | volatility-profits-paper.pdf     |
-| Figure 2b      | 02-prepare-dina.do          | volatility-interest-paper.pdf    |
-| Figure 2c      | 02-prepare-dina.do          | volatility-rental-paper.pdf      |
-| Figure 2d      | 02-prepare-dina.do          | volatility-proprietors-paper.pdf |
-| Figure 3a      | 04-backtest.do              | pred-avg-bot50-1y.pdf            |
-| Figure 3b      | 04-backtest.do              | pred-avg-bot50-2y.pdf            |
-| Figure 3c      | 04-backtest.do              | pred-avg-mid40-1y.pdf            |
-| Figure 3d      | 04-backtest.do              | pred-avg-mid40-2y.pdf            |
-| Figure 4a      | 04-backtest.do              | pred-avg-top1-1y.pdf             |
-| Figure 4b      | 04-backtest.do              | pred-avg-top1-2y.pdf             |
-| Figure 4c      | 04-backtest.do              | pred-avg-next9-1y.pdf            |
-| Figure 4d      | 04-backtest.do              | pred-avg-next9-2y.pdf            |
-| Figure 5a      | 04-plot-covid.do            | presentation-evolution-princ.pdf |
-| Figure 5b      | 04-plot-bot50-recessions.do | bot50-recessions.pdf             |
-| Figure 6a      | 04-analyze-wage-growth.do   | employment-1.pdf                 |
-| Figure 6b      | 04-analyze-wage-growth.do   | wage-growth-covid.pdf            |
-| Figure 7       | 04-gic-wages.do             | gic-wages.pdf                    |
-| Figure 8       | 04-plot-covid.do            | presentation-bot50-step9.pdf     |
-| Figure 9       | 04-plot-covid.do            | presentation-evolution-hweal.pdf |
-| Figure 10      | 03-decompose-race.do        | black-white-gaps-4.pdf           |
-| Figure 11      | 03-decompose-race.do        | index-peinc-race-cycles.pdf      |
-| Table 1        | n.a. (no data)              |                                  |
-| Table 2        | 04-backtest.do              | backtest-table-avg-1y.tex        |
-| Figure A1      | 02-prepare-nipa.do          | gdp-gdi-growth.pdf               |
-| Figure A2a     | 04-backtest-rescaling.do    | pred-avg-bot50-1y.pdf            |
-| Figure A2b     | 04-backtest-rescaling.do    | pred-avg-top1-1y.pdf             |
-| Figure A3      | 04-plot-covid.do            | presentation-evolution-dispo.pdf |
-| Figure A4      | 04-plot-covid.do            | presentation-bot50-step13.pdf    |
-| Figure A5      | 03-decompose-race.do        | black-white-gap-top10.pdf        |
-| Figure A6      | 03-decompose-education.do   | college-premium-4.pdf            |
-| Figure A7      | 04-plot-gender-gaps         | index-peinc-gender-cycles.pdf    |
-| Table A1       | 04-backtest.do              | backtest-table-avg-2y.tex        |
+| Figure/Table # | Program                         | Output file                                        |
+|----------------|---------------------------------|----------------------------------------------------|
+| Figure 1a      | 02-match-dina-transport.do      | check-transport-gender-wage-earnings.pdf           |
+| Figure 1b      | 02-match-dina-transport.do      | check-transport-blacks-hispanics-wage-earnings.pdf |
+| Figure 1c      | 02-match-dina-transport.do      | check-transport-blacks-hispanics-income.pdf        |
+| Figure 1d      | 02-match-dina-transport.do      | check-transport-blacks-hispanics-wealth.pdf        |
+| Figure 2       | 02-create-monthly-wages.do      | flemp-dina-qcew-adjustements-3.pdf                 |
+| Figure 3       | 02-create-monthly-wages.do      | flemp-dina-qcew.pdf                                |
+| Figure 4a      | 04-backtest.do                  | pred-avg-bot50-1y.pdf                              |
+| Figure 4b      | 04-backtest.do                  | pred-avg-bot50-2y.pdf                              |
+| Figure 4c      | 04-backtest.do                  | pred-avg-mid40-1y.pdf                              |
+| Figure 4d      | 04-backtest.do                  | pred-avg-mid40-2y.pdf                              |
+| Figure 5a      | 04-backtest.do                  | pred-avg-top1.pdf                                  |
+| Figure 5b      | 04-backtest.do                  | pred-avg-top1-2y.pdf                               |
+| Figure 5c      | 04-backtest.do                  | pred-avg-next9-1y.pdf                              |
+| Figure 5d      | 04-backtest.do                  | pred-avg-next9-2y.pdf                              |
+| Figure 6a      | 04-plot-covid.do                | presentation-evolution-princ.pdf                   |
+| Figure 6b      | 04-plot-covid.do                | bot50-recessions.pdf                               |
+| Figure 7a      | 04-analyze-wage-growth.do       | employment.pdf                                     |
+| Figure 7b      | 04-analyze-wage-growth.do       | employment-great-recession.pdf                     |
+| Figure 7c      | 04-analyze-wage-growth.do       | wage-growth-covid.pdf                              |
+| Figure 7d      | 04-analyze-wage-growth.do       | wage-growth-great-recession.pdf                    |
+| Figure 8       | 04-gic-wages.do                 | gic-wages.pdf                                      |
+| Figure 9       | 04-plot-covid.do                | presentation-bot50-step9.pdf                       |
+| Figure 10      | 04-plot-covid.do                | presentation-evolution-hweal.pdf                   |
+| Figure 11      | 04-plot-race.do                 | black-white-gaps-4.pdf                             |
+| Figure 12      | 04-plot-race.do                 | index-peinc-race-cycles.pdf                        |
+| Table 1        | n.a. (no data)                  |                                                    |
+| Table 2        | 04-backtest.do                  | backtest-table-avg-1y.tex                          |
+| Figure A1      | 02-prepare-nipa.do              | gdp-gdi-growth.pdf                                 |
+| Figure A2      | 02-match-dina-transport.do      | rank-flwag-dina-cps.pdf                            |
+| Figure A3      | 02-prepare-bls-employment.do    | employment-ssa-bls.pdf                             |
+| Figure A4a     | 02-update-qcew-backtest.do      | extrapolation-bot50.pdf                            |
+| Figure A4b     | 02-update-qcew-backtest.do      | extrapolation-top10.pdf                            |
+| Figure A5a     | 02-prepare-dina.do              | volatility-profits-paper.pdf                       |
+| Figure A5b     | 02-prepare-dina.do              | volatility-interest-paper.pdf                      |
+| Figure A5c     | 02-prepare-dina.do              | volatility-rental-paper.pdf                        |
+| Figure A5d     | 02-prepare-dina.do              | volatility-proprietors-paper.pdf                   |
+| Figure A6a     | 04-backtest-rescaling.do        | pred-avg-bot50-1y.pdf                              |
+| Figure A6b     | 04-backtest-rescaling.do        | pred-avg-top1-1y.pdf                               |
+| Figure A7      | 04-plot-covid.do                | presentation-evolution-dispo.pdf                   |
+| Figure A8      | 04-plot-covid.do                | presentation-bot50-step13.pdf                      |
+| Figure A9      | 04-plot-race.do                 | black-white-gap-top10.pdf                          |
+| Figure A10     | 04-plot-education.do            | college-premium-4.pdf                              |
+| Figure A11     | 04-plot-gender.do               | index-peinc-gender-cycles.pdf                      |
+| Table A1       | 04-backtest.do                  | backtest-table-avg-2y.tex                          |
 
 ## References
 
 Steven Ruggles, Sarah Flood, Ronald Goeken, Megan Schouweiler and Matthew Sobek. IPUMS USA: Version 12.0 [dataset]. Minneapolis, MN: IPUMS, 2022. https://doi.org/10.18128/D010.V12.0
 
 Sarah Flood, Miriam King, Renae Rodgers, Steven Ruggles, J. Robert Warren and Michael Westberry. Integrated Public Use Microdata Series, Current Population Survey: Version 9.0 [dataset]. Minneapolis, MN: IPUMS, 2021. https://doi.org/10.18128/D030.V9.0
-

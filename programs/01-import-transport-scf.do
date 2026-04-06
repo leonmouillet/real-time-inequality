@@ -5,12 +5,14 @@
 cap mkdir "$transport"
 cap mkdir "$transport/scf"
 
+local last_year_scf 2022
+
 // Import the CPS to convert series to nominal
 import fred CPIAUCSL, clear
 generate month = month(daten)
 generate year = year(daten)
 keep if month == 9
-keep if inrange(year, 1989, 2019)
+keep if inrange(year, 1989, $last_year_dina)
 drop month
 sort year
 rename CPIAUCSL cpi
@@ -26,7 +28,7 @@ clear
 save "$work/01-import-transport-scf/scf-full.dta", emptyok replace
 
 // Merge full and summary files in each year to get spouse's age
-foreach year of numlist 1989(3)2019 {
+foreach year of numlist 1989(3)`last_year_scf' {
     use "$rawdata/scf-data/rscfp`year'.dta", clear
     
     local yy = substr("`year'", 3, 2)
@@ -90,7 +92,8 @@ foreach year of numlist 1989(3)2019 {
     save "$work/01-import-transport-scf/scf-combined-`year'.dta", replace
 }
 
-forvalues year = 1989/2020 {
+tempfile scf_full
+forvalues year = 1989/$last_year_dina { // We need data up to $last_dina_year
     // Construct a yearly sample by mixing two adjacent samples
     local y1 = 1989 + floor((`year' - 1989)/3)*3
     
@@ -99,10 +102,10 @@ forvalues year = 1989/2020 {
         use "$work/01-import-transport-scf/scf-combined-`y1'.dta", clear
     }
     else {
-        if (`year' >= 2019) {
+        if (`year' >= `last_year_scf') {
             // We are past the last SCF survey year, we use the last year
             // available
-            use "$work/01-import-transport-scf/scf-combined-2019.dta", clear
+            use "$work/01-import-transport-scf/scf-combined-2022.dta", clear
         }
         else {
             // We are between two years, mix the samples
@@ -211,9 +214,18 @@ forvalues year = 1989/2020 {
     assert age_spouse_scf >= 20 & !missing(age_spouse_scf) if married
     assert inrange(race_scf, 1, 4) & !missing(race_scf)
     
-    append using "$work/01-import-transport-scf/scf-full.dta"
-    save "$work/01-import-transport-scf/scf-full.dta", replace
+	// Save to tempfile
+    if (`year' == 1989) {
+        save `scf_full', replace
+    }
+    else {
+        append using `scf_full'
+        save `scf_full', replace
+    }
 }
+
+use `scf_full', clear
+save "$work/01-import-transport-scf/scf-full.dta", replace
 
 // Check that all cells are represented
 preserve
@@ -225,10 +237,11 @@ restore
 // Export CSVs
 levelsof year, local(years)
 foreach yr of local years {
-    export delimited id weight old married employed scf_* using "$transport/scf/scf`yr'.csv" if year == `yr', replace
+    export delimited id weight old married employed scf_* using "$work/02-transport/scf/scf`yr'.csv" if year == `yr', replace
 }
 
 // Export univariate distributions
+tempfile summary
 local firstiter = 1
 foreach v of varlist scf_* {
     preserve
@@ -255,11 +268,13 @@ foreach v of varlist scf_* {
         
         // Combine & save
         if (`firstiter' == 0) {
-            merge 1:1 year using "$work/01-import-transport-scf/scf-transport-summary.dta", nogenerate
+            merge 1:1 year using `summary', nogenerate
         }
-        save "$work/01-import-transport-scf/scf-transport-summary.dta", replace
+        save `summary', replace
+        
     restore
     local firstiter = 0
 }
 
-
+use `summary', clear
+save "$work/01-import-transport-scf/scf-transport-summary.dta", replace

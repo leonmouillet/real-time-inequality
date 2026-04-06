@@ -2,12 +2,13 @@
 // Import DINA microdata
 // -------------------------------------------------------------------------- //
 
-foreach year of numlist 1975/2019 {
+foreach year of numlist 1962 1964 1966/$last_year_dina {
     use "$rawdata/dina-data/microfiles/usdina`year'.dta", clear
         
     replace dweght = dweght/1e5
     
-    keep id dweght princ flemp flsup flwag flmil flprl fkinc fkhou fkequ ///
+    keep id dweght princ fiwag fibus fiint fidiv fikgi firen diwco ssinc_oa difoo dicao ///
+        flemp flsup flwag flmil flprl fkinc fkhou fkequ ///
         fkfix fkbus fkpen fkprk fksubk flsubl fkmor fknmo hwbus hwpen hwequ proprestax ///
         propbustax corptax govin npinc plcon plobe plpbe ssinc_di peninc ///
         plben prisupen plpbe plobe peinc invpen pkinc rentalhome rentalmort ///

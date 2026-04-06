@@ -2,14 +2,14 @@
 // Generate monthly DINA files
 // -------------------------------------------------------------------------- //
 
-tempfile cps_changes
-
-global date_begin = ym(1976, 01)
-global date_end   = ym(2019, 12)
+local date_begin = ym(1976, 01)
+local date_end   = ym(2024, 12)
 
 set seed 19920902
 
-foreach t of numlist $date_begin / $date_end {
+tempfile cps_changes
+
+foreach t of numlist `date_begin' / `date_end' {
     
     local year = year(dofm(`t'))
     local month = month(dofm(`t'))

@@ -42,7 +42,7 @@ save "$work/01-import-dina-macro/dina-wealth-detailed.dta", replace
 // Separate income paid vs. received of the government
 // -------------------------------------------------------------------------- //
 
-import excel "$rawdata/dina-data/DINA(Aggreg).xlsx", sheet("TA3") cellrange("A8:V115") clear
+import excel "$rawdata/dina-data/DINA(Aggreg).xlsx", sheet("TA3") cellrange("A8:V120") clear
 
 rename A year
 rename U ttgovin_rec
@@ -59,7 +59,7 @@ save "$work/01-import-dina-macro/dina-govin.dta", replace
 // Store aside NPISH account (yearly) to make adjustment to DINA variables
 // -------------------------------------------------------------------------- //
 
-import excel "$rawdata/dina-data/DINA(Aggreg).xlsx", sheet("TSA4") cellrange("A9:G116") clear
+import excel "$rawdata/dina-data/DINA(Aggreg).xlsx", sheet("TSA4") cellrange("A9:G121") clear
 
 rename A year
 rename B ttnpinc
@@ -79,7 +79,7 @@ save "$work/01-import-dina-macro/dina-npinc.dta", replace
 // and mixed income
 // -------------------------------------------------------------------------- //
 
-import excel "$rawdata/dina-data/DINA(Aggreg).xlsx", sheet("TSA3") cellrange("A10:AK116") clear
+import excel "$rawdata/dina-data/DINA(Aggreg).xlsx", sheet("TSA3") cellrange("A10:AK122") clear
 
 rename A year
 rename AG ttnmix

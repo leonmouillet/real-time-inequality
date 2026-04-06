@@ -3,56 +3,62 @@
 // -------------------------------------------------------------------------- //
 
 clear
-quietly infix                ///
-  int     year      1-4      ///
-  long    serial    5-9      ///
-  byte    month     10-11    ///
-  double  hwtfinl   12-21    ///
-  str     cpsid     22-35    ///
-  byte    asecflag  36-36    ///
-  byte    pernum    37-38    ///
-  double  wtfinl    39-52    ///
-  str     cpsidp    53-66    ///
-  byte    age       67-68    ///
-  byte    sex       69-69    ///
-  int     race      70-72    ///
-  byte    sploc     73-74    ///
-  int     hispan    75-77    ///
-  byte    empstat   78-79    ///
-  int     educ      80-82    ///
-  double  earnwt    83-92    ///
-  double  earnweek  93-100   ///
-  byte    eligorg   101-101  ///
+quietly infix                 ///
+  int     year       1-4      ///
+  long    serial     5-9      ///
+  byte    month      10-11    ///
+  double  hwtfinl    12-21    ///
+  double  cpsid      22-35    ///
+  byte    asecflag   36-36    ///
+  byte    pernum     37-38    ///
+  double  wtfinl     39-52    ///
+  double  cpsidp     53-66    ///
+  double  cpsidv     67-81    ///
+  double  earnweek   82-89    /// Variable "earnweek2" in IPUMS data extract.
+  byte    age        90-91    ///
+  byte    sex        92-92    ///
+  int     race       93-95    ///
+  byte    sploc      96-97    ///
+  int     hispan     98-100   ///
+  byte    empstat    101-102  ///
+  int     educ       103-105  ///
+  double  earnwt     106-115  ///
+  byte    eligorg    116-116  ///
   using "$rawdata/cps-monthly/cps-monthly.dat"
 
-replace hwtfinl  = hwtfinl  / 10000
-replace wtfinl   = wtfinl   / 10000
-replace earnwt   = earnwt   / 10000
-replace earnweek = earnweek / 100
+replace hwtfinl   = hwtfinl   / 10000
+replace wtfinl    = wtfinl    / 10000
+replace earnweek  = earnweek  / 100
+replace earnwt    = earnwt    / 10000
 
-format hwtfinl  %10.4f
-format wtfinl   %14.4f
-format earnwt   %10.4f
+format hwtfinl   %10.4f
+format cpsid     %14.0f
+format wtfinl    %14.4f
+format cpsidp    %14.0f
+format cpsidv    %15.0f
 format earnweek %8.2f
+format earnwt    %10.4f
 
-label var year     `"Survey year"'
-label var serial   `"Household serial number"'
-label var month    `"Month"'
-label var hwtfinl  `"Household weight, Basic Monthly"'
-label var cpsid    `"CPSID, household record"'
-label var asecflag `"Flag for ASEC"'
-label var pernum   `"Person number in sample unit"'
-label var wtfinl   `"Final Basic Weight"'
-label var cpsidp   `"CPSID, person record"'
-label var age      `"Age"'
-label var sex      `"Sex"'
-label var race     `"Race"'
-label var sploc    `"Person number of spouse (from programming)"'
-label var empstat  `"Employment status"'
-label var educ     `"Educational attainment recode"'
-label var earnwt   `"Earnings weight"'
-label var earnweek `"Weekly earnings"'
-label var eligorg  `"(Earnings) eligibility flag"'
+label var year      `"Survey year"'
+label var serial    `"Household serial number"'
+label var month     `"Month"'
+label var hwtfinl   `"Household weight, Basic Monthly"'
+label var cpsid     `"CPSID, household record"'
+label var asecflag  `"Flag for ASEC"'
+label var pernum    `"Person number in sample unit"'
+label var wtfinl    `"Final Basic Weight"'
+label var cpsidp    `"CPSID, person record"'
+label var cpsidv    `"Validated Longitudinal Identifier"'
+label var earnweek `"Weekly earnings (rounded)"'
+label var age       `"Age"'
+label var sex       `"Sex"'
+label var race      `"Race"'
+label var sploc     `"Person number of spouse (from programming)"'
+label var hispan    `"Hispanic origin"'
+label var empstat   `"Employment status"'
+label var educ      `"Educational attainment recode"'
+label var earnwt    `"Earnings weight"'
+label var eligorg   `"(Earnings) eligibility flag"'
 
 label define month_lbl 01 `"January"'
 label define month_lbl 02 `"February"', add
@@ -71,6 +77,9 @@ label values month month_lbl
 label define asecflag_lbl 1 `"ASEC"'
 label define asecflag_lbl 2 `"March Basic"', add
 label values asecflag asecflag_lbl
+
+label define earnweek_lbl 99999999 `"NIU"'
+label values earnweek earnweek_lbl
 
 label define age_lbl 00 `"Under 1 year"'
 label define age_lbl 01 `"1"', add
@@ -286,6 +295,21 @@ label values educ educ_lbl
 label define eligorg_lbl 0 `"Not eligible"'
 label define eligorg_lbl 1 `"Eligible"', add
 label values eligorg eligorg_lbl
+
+
+// Handle October 2025 missing due to government shutdown
+count if year == 2025 & month == 10
+if r(N) == 0 {
+    expand 2 if year == 2025 & inlist(month, 9, 11), gen(_is_oct)    
+    gegen _new_serial = group(year month serial) if _is_oct
+    replace serial = _new_serial if _is_oct
+    replace month = 10 if _is_oct
+    foreach v in wtfinl earnwt hwtfinl {
+        replace `v' = `v' / 2 if _is_oct
+    }
+    drop _is_oct _new_serial
+}
+
 
 save "$work/01-import-cps-monthly/cps-monthly.dta", replace
 
