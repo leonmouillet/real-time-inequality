@@ -54,7 +54,7 @@ replace employed = 100*employed
 gr tw (line employed time if unit == "working_age_equal_split" & group == "1st Quartile", col(ebblue) lw(medthick)) ///
     (line employed time if unit == "working_age_individual"   & group == "1st Quartile", col(cranberry) lw(medthick)), ///
     xtitle("") ytitle("Employed (%)") yscale(range(0 100)) ylabel(0(10)100) ///
-    xlabel(`=ym(1976, 01)'(48)`=ym(2020, 01)', alternate) legend(off) ///
+    xlabel(`=ym(1976, 01)'(48)`=ym(2024, 01)', alternate) legend(off) ///
     text(90 `=ym(1990, 01)' "Working-age adults" "(equal split among married)", col(ebblue)) ///
     text(40 `=ym(2002, 01)' "Working-age adults" "(individualized)", col(cranberry)) ///
     subtitle("Employment Rate of Bottom 25% Working-Age Adults") ///
@@ -64,7 +64,7 @@ gr tw (line employed time if unit == "working_age_equal_split" & group == "1st Q
         "upper trend reflects the growing female labor force participation. In the series working-age adults (equal split among" ///
         "married), earnings are split equally within married couples. This eliminates the secular trend and makes such series more" ///
         "meaningful for long-term inequality comparisons.", size(vsmall))
-graph export "$graphs/03-build-online-database-labor/employment-first-quartile-new.pdf", replace
+graph export "$graphs/03-build-online-database-labor/employment-first-quartile.pdf", replace
 */
 
 // -------------------------------------------------------------------------- //

@@ -6,7 +6,7 @@
 // Stock data
 // -------------------------------------------------------------------------- //
 
-import excel "https://www.ici.org/statistical-report/ret_25_q3_data.xls", sheet("Table 19") clear
+import excel "https://www.ici.org/statistical-report/ret_25_q4_data.xls", sheet("Table 19") clear
 
 keep if ustrregexm(A, "^[0-9][0-9][0-9][0-9](:Q[1-4])?$")
 

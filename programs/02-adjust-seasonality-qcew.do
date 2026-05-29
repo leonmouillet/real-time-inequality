@@ -8,10 +8,15 @@ use "$work/02-tabulate-qcew/qcew-tabulations.dta", clear
 // Create panel
 // -------------------------------------------------------------------------- //
 
+
 // Drop the first year of data for each version, foreach the 12-month moving
 // average of wages gives leads to missing values
 drop if year == 1975 & version == "SIC"
 drop if year == 1990 & version == "NAICS"
+/*
+drop if year == 1975 & version == "SIC"   & month <= 6
+drop if year == 1990 & version == "NAICS" & month <= 6
+*/
 
 generate time = monthly(strofreal(year) + "m" + strofreal(month), "YM")
 gegen id = group(version p)

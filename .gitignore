@@ -16,6 +16,9 @@ raw-data/fred-data
 raw-data/*/old
 sandbox
 
+programs/00-local-config.do
+raw-data/ui-data/r539cy.xml
+instructions.pdf
 *.scheme
 **/.DS_Store
 ~$*

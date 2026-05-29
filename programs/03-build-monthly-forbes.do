@@ -417,13 +417,6 @@ order time year month source forbes_uri name rank birth_year wealth private_weal
 save "$work/03-build-monthly-forbes/forbes-monthly-micro.dta", replace
 
 // -------------------------------------------------------------------------- //
-// Produce validation graph for disaggregation of Forbes 400
-// -------------------------------------------------------------------------- //
-
-cap mkdir "$graphs/03-build-monthly-forbes-validation"
-do "$programs/03-build-monthly-forbes-validation.do"
-
-// -------------------------------------------------------------------------- //
 // Create monthly series
 // -------------------------------------------------------------------------- //
 
@@ -438,3 +431,10 @@ collapse (sum) forbes_working_age = wealth (count) obs_working_age = wealth, by(
 merge 1:1 year month using `all'
 drop _merge
 save "$work/03-build-monthly-forbes/forbes-monthly-totals.dta", replace
+
+// -------------------------------------------------------------------------- //
+// Produce validation graph for disaggregation of Forbes 400
+// -------------------------------------------------------------------------- //
+
+cap mkdir "$graphs/03-build-monthly-forbes-validation"
+do "$programs/03-build-monthly-forbes-validation.do"

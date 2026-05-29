@@ -8,7 +8,7 @@
 
 tempfile stat_minw_series
 fredsearch "STTMINWG", idonly saving("`stat_minw_series'", replace)
-import fred, serieslist("`stat_minw_series'") clear
+import fred, serieslist("`stat_minw_series'") clear // Sometimes fails with I/O error : just wait and retry
 
 generate year = year(daten)
 generate month = month(daten)

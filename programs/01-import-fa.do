@@ -2,7 +2,7 @@
 // Import financial accounts from the FED
 // -------------------------------------------------------------------------- //
 
-copy "https://www.federalreserve.gov/releases/z1/20260109/z1_csv_files.zip" "$work/01-import-fa/z1_csv_files.zip", replace
+copy "https://www.federalreserve.gov/releases/z1/20260319/z1_csv_files.zip" "$work/01-import-fa/z1_csv_files.zip", replace
 cd "$work/01-import-fa"
 unzipfile "$work/01-import-fa/z1_csv_files.zip", replace
 

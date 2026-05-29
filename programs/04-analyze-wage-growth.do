@@ -2,6 +2,16 @@
 // Analyse the evolution of wage growth during the last two recessions
 // -------------------------------------------------------------------------- //
 
+global pre2008_peak    = ym(2007, 12)
+global post2008_recov  = ym(2017, 12)
+global preCOVID_peak   = ym(2020, 02)
+global postCOVID_recov = ym(2022, 06)
+
+
+// -------------------------------------------------------------------------- //
+// Evolution of employment
+// -------------------------------------------------------------------------- //
+
 import fred PAYEMS, clear
 generate year  = year(daten)
 generate month = month(daten)
@@ -16,19 +26,26 @@ generate emprate = 100*nonfarm_emp/monthly_working_age
 generate time = ym(year, month)
 format time %tm
 
-global pre2008_peak   = ym(2007, 12)
-global post2008_recov = ym(2017, 05)
-global preCOVID_peak  = ym(2018, 07)
-global postCOVID_recov = ym(2022, 02)
-
-gr tw (line emprate time, lw(medthick) col(ebblue)) if inrange(time, ym(2019, 1), ym(2022, 9)), scale(1.2) ///
+gr tw (line emprate time if inrange(time, ym(2019, 1), ym(2023, 01)), lw(medthick) col(ebblue)) ///
+	(pcarrowi 78.4 `=$preCOVID_peak + 1' 78.4 `=$postCOVID_recov - 1', lw(thin) col(black)) ///
+	(pcarrowi 78.4 `=$postCOVID_recov - 1' 78.4 `=$preCOVID_peak + 1', lw(thin) col(black)) ///
+    (sc emprate time if inlist(time, $preCOVID_peak, $postCOVID_recov), col(cranberry)), ///
+    text(79 `=$preCOVID_peak' "02/20", placement(top) size(small)) ///
+    text(79 `=$postCOVID_recov' "06/22", placement(top) size(small)) ///
+    text(78.2 `=($postCOVID_recov + $preCOVID_peak)/2' "2 years and 4 months", placement(s)) ///
     legend(off) ytitle("Employment to working-age population ratio (%)") ///
-    xtitle("") xlabel(`=ym(2019, 1)'(6)`=ym(2022, 6)', labsize(small)) ylabel(67(1)79)
+    xtitle("") xlabel(`=ym(2019,1)'(12)`=ym(2023,1)', labsize(small)) ylabel(67(1)79) scale(1.2)
 graph export "$graphs/04-analyze-wage-growth/employment.pdf", replace
 
-gr tw (line emprate time, lw(medthick) col(ebblue)) if inrange(time, ym(2007, 7), ym(2017, 7)), scale(1.2) ///
-    legend(off) ytitle("Employment to working-age population ratio (%)") ///
-    xtitle("") xlabel(`=ym(2008, 1)'(24)`=ym(2018, 1)', labsize(small)) ylabel(67(1)79)
+gr tw (line emprate time if inrange(time, ym(2007, 1), ym(2019, 1)), lw(medthick) col(ebblue)) ///
+	(pcarrowi 76.1 `=$pre2008_peak + 4' 76.1 `=$post2008_recov - 4', lw(thin) col(black)) ///
+	(pcarrowi 76.1 `=$post2008_recov - 4' 76.1 `=$pre2008_peak + 4', lw(thin) col(black)) ///
+	(sc emprate time if inlist(time, $pre2008_peak, $post2008_recov), col(cranberry)), ///
+	text(76.5 `=$pre2008_peak + 4' "12/2007", placement(n) size(small)) ///
+	text(76.5 `=$post2008_recov - 6' "12/2017", placement(n) size(small)) ///
+	text(76 `=($post2008_recov + $pre2008_peak)/2' "10 years", placement(bottom) justification(right)) ///
+	legend(off) ytitle("Employment to working-age population ratio (%)") ///
+	xtitle("") xlabel(`=ym(2008, 1)'(24)`=ym(2018, 01)', labsize(small)) ylabel(67(1)79) scale(1.2)
 graph export "$graphs/04-analyze-wage-growth/employment-great-recession.pdf", replace
 
 gr tw (line emprate time, lw(medthick) col(ebblue)) (sc emprate time if inlist(time, $pre2008_peak), col(cranberry)), ///
@@ -42,7 +59,7 @@ gr tw (line emprate time, lw(medthick) col(ebblue)) (sc emprate time if inlist(t
     legend(off) ytitle("Employment to working-age population ratio (%)") ///
     xtitle("") xlabel(`=ym(2006, 1)'(48)`=ym(2026, 1)') ///
     text(77 `=$pre2008_peak + 4' "Great recession" "begins" "in 12/2007", placement(right) justification(left) size(*0.8)) ///
-    text(76 `=($post2008_recov + $pre2008_peak)/2' "9 years and 5 months", placement(bottom) justification(right))
+    text(76 `=($post2008_recov + $pre2008_peak)/2' "10 years", placement(bottom) justification(right))
 graph export "$graphs/04-analyze-wage-growth/employment-3.pdf", replace
 
 gr tw (line emprate time, lw(medthick) col(ebblue)) (sc emprate time if inlist(time, $pre2008_peak, $post2008_recov), col(cranberry)) ///
@@ -50,20 +67,21 @@ gr tw (line emprate time, lw(medthick) col(ebblue)) (sc emprate time if inlist(t
     legend(off) ytitle("Employment to working-age population ratio (%)") ///
     xtitle("") xlabel(`=ym(2006, 1)'(48)`=ym(2026, 1)') ///
     text(77 `=$pre2008_peak + 4' "Great recession" "begins" "in 12/2007", placement(right) justification(left) size(*0.8)) ///
-    text(77 `=$post2008_recov - 4' "Pre-recession level" "reached again" "in 07/2017", placement(left) justification(right) size(*0.8)) ///
-    text(76 `=($post2008_recov + $pre2008_peak)/2' "9 years and 5 months", placement(bottom) justification(right))
+    text(77 `=$post2008_recov - 4' "Pre-recession level" "reached again" "in 12/2017", placement(left) justification(right) size(*0.8)) ///
+    text(76 `=($post2008_recov + $pre2008_peak)/2' "10 years", placement(bottom) justification(right))
 graph export "$graphs/04-analyze-wage-growth/employment-4.pdf", replace
 
 gr tw (line emprate time, lw(medthick) col(ebblue)) (sc emprate time if inlist(time, $pre2008_peak, $post2008_recov, $preCOVID_peak, $postCOVID_recov), col(cranberry)) ///
     (pcarrowi 76.1 `=$pre2008_peak + 4' 76.1 `=$post2008_recov - 4', lw(medthick) col(black)) ///
-    (pcarrowi 77.4 `=$preCOVID_peak + 3' 77.4 `=$postCOVID_recov - 3', lw(medthick) col(black)), ///
+    (pcarrowi 78.4 `=$preCOVID_peak + 3' 78.4 `=$postCOVID_recov - 3', lw(medthick) col(black)), ///
     legend(off) ytitle("Employment to working-age population ratio (%)") ///
     xtitle("") xlabel(`=ym(2006, 1)'(48)`=ym(2026, 1)') ///
     text(77.0 `=$pre2008_peak + 4' "Great recession" "begins" "in 12/2007", placement(right) justification(left) size(*0.8)) ///
-    text(77.0 `=$post2008_recov - 4' "Pre-recession level" "reached again" "in 07/2017", placement(left) justification(right) size(*0.8)) ///
-    text(76.0 `=($post2008_recov + $pre2008_peak)/2' "9 years and 5 months", placement(bottom) justification(right)) ///
-    text(77.3 `=$preCOVID_peak + 2' "07/18", placement(se)) ///
-    text(77.6 `=$postCOVID_recov - 2' "02/22", placement(nw))
+    text(77.0 `=$post2008_recov - 4' "Pre-recession level" "reached again" "in 12/2017", placement(left) justification(right) size(*0.8)) ///
+    text(76.0 `=($post2008_recov + $pre2008_peak)/2' "10 years", placement(bottom) justification(right)) ///
+    text(78.5 `=$preCOVID_peak - 2' "02/20", placement(nw)) ///
+    text(78.5 `=$postCOVID_recov + 2' "06/22", placement(ne)) ///
+    text(78.0 `=($postCOVID_recov + $preCOVID_peak)/2' "2 years and 4 months", placement(bottom) justification(right))
 graph export "$graphs/04-analyze-wage-growth/employment-5.pdf", replace
 
 // -------------------------------------------------------------------------- //
@@ -333,16 +351,16 @@ preserve
 		ytitle("Annualized real labor income growth (%)") bargap(20) ///
 		over(group_str, sort(group_order)) over(categ) nofill ///
 		legend(label(1 "Great recession & recovery") label(2 "COVID recession & recovery")) ///
-		text(0.8  3    "9 years" "11 months",  size(small) col(cranberry)) ///
-		text(2.1  12   "2 years" "3 months",   size(small) col(ebblue))    ///
-		text(1.3  22   "10 years" "4 months",  size(small) col(cranberry)) ///
-		text(3.05 30.5 "2 years" "10 months",  size(small) col(ebblue))    ///
-		text(1.15 49   "11 years" "11 months", size(small) col(cranberry)) ///
-		text(1.7  58   "3 years" "7 month",    size(small) col(ebblue))    ///
-		text(0.45 67.5 "8 years" "10 months",  size(small) col(cranberry)) ///
-		text(2    76   "2 years" "4 months",   size(small) col(ebblue))    ///
-		text(1.45 87   "10 years" "1 month",   size(small) col(cranberry)) ///
-		text(2.95 95   "2 years" "2 months",   size(small) col(ebblue))
+		//text(0.8  3    "9 years" "11 months",  size(small) col(cranberry)) ///
+		//text(2.1  12   "2 years" "3 months",   size(small) col(ebblue))    ///
+		//text(1.3  22   "10 years" "4 months",  size(small) col(cranberry)) ///
+		//text(3.05 30.5 "2 years" "10 months",  size(small) col(ebblue))    ///
+		//text(1.15 49   "11 years" "11 months", size(small) col(cranberry)) ///
+		//text(1.7  58   "3 years" "7 month",    size(small) col(ebblue))    ///
+		//text(0.45 67.5 "8 years" "10 months",  size(small) col(cranberry)) ///
+		//text(2    76   "2 years" "4 months",   size(small) col(ebblue))    ///
+		//text(1.45 87   "10 years" "1 month",   size(small) col(cranberry)) ///
+		//text(2.95 95   "2 years" "2 months",   size(small) col(ebblue))
 	graph export "$graphs/04-analyze-wage-growth/growth-rates-race-gender.pdf", replace
 restore
 
@@ -365,36 +383,183 @@ preserve
 
 	// COVID period
 	use `wagelevels', clear
-	keep if inrange(time, ym(2019, 1), ym(2022, 09))
+	keep if inrange(time, ym(2020, 2), ym(2022, 06))
 	tsset bnum time, monthly
 	by bnum: generate wage0 = wage[1]
 	replace wage = 100*wage/wage0
 	keep year month time bnum wage
 	reshape wide wage, i(year month time) j(bnum)
 	gr tw line wage* time, lw(medthick..) legend(off) lcol(ebblue cranberry orange purple) scale(1.2) ///
+		yline(100, lpattern(dot) lcolor(black)) ///
 		ytitle("Average real labor income" "Index (2019m1 = 100)") xtitle("") ///
-		xlabel(`=ym(2019,1)'(6)`=ym(2022, 7)', alternate labsize(small))  ///
-		text(90   `=ym(2020, 11)' "2nd quartile", size(small) col(ebblue))    ///
-		text(100  `=ym(2022, 1)'  "3rd quartile", size(small) col(cranberry)) ///
-		text(108  `=ym(2021, 9)'  "4th quartile", size(small) col(orange))    ///
+		xlabel(`=ym(2020,1)'(6)`=ym(2022, 7)', labsize(small))  ///
+		text(86   `=ym(2020, 11)' "2nd quartile", size(small) col(ebblue))    ///
+		text(97   `=ym(2022, 1)'  "3rd quartile", size(small) col(cranberry)) ///
+		text(106  `=ym(2021, 9)'  "4th quartile", size(small) col(orange))    ///
 		text(116.5 `=ym(2021, 7)' "Top 1%",       size(small) col(purple))
 	gr export "$graphs/04-analyze-wage-growth/wage-growth-covid.pdf", replace
 
 	// Great recession period
 	use `wagelevels', clear
-	keep if inrange(time, ym(2007, 12), ym(2018, 12))
+	keep if inrange(time, ym(2007, 12), ym(2017, 12))
 	tsset bnum time, monthly
 	by bnum: generate wage0 = wage[1]
 	replace wage = 100*wage/wage0
 	keep year month time bnum wage
 	reshape wide wage, i(year month time) j(bnum)
 	gr tw line wage* time, lw(medthick..) legend(off) lcol(ebblue cranberry orange purple) scale(1.2) ///
+		yline(100, lpattern(dot) lcolor(black)) ///
 		ytitle("Average real labor income" "Index (2007m12 = 100)") xtitle("") ///
 		xlabel(`=ym(2008, 01)'(24)`=ym(2018, 01)') ///
 		ylabel(80(10)120) ///
 		text(90   `=ym(2015, 11)' "2nd quartile", size(small) col(ebblue))    ///
 		text(93   `=ym(2013, 1)'  "3rd quartile", size(small) col(cranberry)) ///
 		text(107.5 `=ym(2016, 6)' "4th quartile", size(small) col(orange))    ///
-		text(102  `=ym(2018, 5)'  "Top 1%",       size(small) col(purple))
+		text(86   `=ym(2010, 5)'  "Top 1%",       size(small) col(purple))
 	gr export "$graphs/04-analyze-wage-growth/wage-growth-great-recession.pdf", replace
 restore
+
+// -------------------------------------------------------------------------- //
+// Wage distribution snapshots during COVID
+// -------------------------------------------------------------------------- //
+
+preserve
+
+    local nsnap = 5
+    local snap_years  "2020 2020 2020 2021 2022"
+    local snap_months "2    4    11   6    6"
+    local c1 "black" 
+    local c2 "cranberry"
+    local c3 "orange" 
+    local c4 "dkgreen"
+    local c5 "ebblue"
+
+    // NIPA deflators for each snapshot
+    use "$work/02-prepare-nipa/nipa-simplified-monthly.dta", clear
+    forval j = 1/`nsnap' {
+        local yr : word `j' of `snap_years'
+        local mo : word `j' of `snap_months'
+        summarize nipa_deflator if year == `yr' & month == `mo', meanonly
+        global distrib_defl`j' = r(mean)
+    }
+
+    // Kernel densities and non-employment shares, one snapshot at a time
+    clear
+    tempfile kde_all
+    save `kde_all', emptyok replace
+
+    forval j = 1/`nsnap' {
+        local yr : word `j' of `snap_years'
+        local mo : word `j' of `snap_months'
+		
+		// Load microfiles, working-age individuals only
+        use weight age flemp proprietors if age < 65 ///
+            using "$microfiles/$update_id/dina-monthly-`yr'm`mo'.dta", clear
+
+		// Compute wage
+        generate double wage = (flemp + 0.7 * proprietors) / ${distrib_defl`j'}
+
+        // Kernel density of log10(1 + wage)
+        generate double lwage = log10(1 + wage)
+        kdensity lwage [aw=weight], generate(xk dk) nograph bwidth(0.15) n(400)
+        keep in 1/400
+        keep xk dk
+
+        generate byte   snap   = `j'
+        append using `kde_all'
+        save `kde_all', replace
+    }
+
+    // 2×2 panel figure
+    use `kde_all', clear
+    sort snap xk
+    local monthnames "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec"
+    local mo1    : word 1 of `snap_months'
+    local yr1    : word 1 of `snap_years'
+    local mname1 : word `mo1' of `monthnames'
+
+    forval k = 2/`nsnap' {
+        local yr    : word `k' of `snap_years'
+        local mo    : word `k' of `snap_months'
+        local mname : word `mo' of `monthnames'
+
+        gr tw ///
+            (line dk xk if snap==1   & inrange(xk, 3, 6), col(`c1')    lw(thin)) ///
+            (line dk xk if snap==`k' & inrange(xk, 3, 6), col(`c`k'')  lw(thin)), ///
+            xscale(range(3 6)) yscale(range(0 .)) ///
+            xlabel(3 "1,000" 4 "10,000" 5 "100,000" 6 "1M", labsize(vsmall)) ///
+            xtitle("") ytitle("") ///
+            legend(order(1 "`mname1' `yr1'" 2 "`mname' `yr'") ///
+                   ring(1) pos(6) cols(2) size(vsmall) region(lw(none))) ///
+            name(g_panel`k', replace)
+    }
+    gr combine g_panel2 g_panel3 g_panel4 g_panel5, ///
+        cols(2) ycommon xcommon imargin(small) ///
+        l1title("Density (share of working-age population)", size(small)) ///
+        b1title("Annual wage earnings (constant USD, log scale)", size(small)) ///
+        xsize(8) ysize(7)
+    graph export "$graphs/04-analyze-wage-growth/wage-distribution-snapshots.pdf", replace
+
+restore
+
+
+// -------------------------------------------------------------------------- //
+// Growth incidence curve over COVID and Great Recession
+// -------------------------------------------------------------------------- //
+
+clear
+tempfile gic
+save `gic', replace emptyok
+
+local j = 1
+foreach t in $pre2008_peak $post2008_recov $preCOVID_peak $postCOVID_recov {
+    local year = year(dofm(`t'))
+    local month = month(dofm(`t'))
+    
+    use id weight age flemp proprietors if age < 65 using "$microfiles/$update_id/dina-monthly-`year'm`month'.dta", clear
+    
+    // Calculate wage income
+    generate wage = flemp + 0.7*proprietors
+    
+    //gegen wage = mean(wage), by(id) replace
+    
+    // Get rank
+    sort wage
+    generate rank = sum(weight)
+    replace rank = 1e5*(rank - weight/2)/rank[_N]
+
+    egen p = cut(rank), at(0(5000)95000 99000 999999)
+    
+    gcollapse (mean) wage [pw=weight], by(p)
+    
+    generate year = `year'
+    generate month = `month'
+    generate j = `j'
+    
+    append using `gic'
+    save `gic', replace
+    
+    local j = `j' + 1
+}
+
+merge n:1 year month using "$work/02-prepare-nipa/nipa-simplified-monthly.dta", keepusing(nipa_deflator) nogenerate keep(match)
+
+replace wage = wage/nipa_deflator
+
+keep p wage j
+reshape wide wage, i(p) j(j)
+
+generate growth_2008 = 100*((wage2/wage1)^(12/(${post2008_recov} - ${pre2008_peak})) - 1)
+generate growth_covid = 100*((wage4/wage3)^(12/(${postCOVID_recov} - ${preCOVID_peak})) - 1)
+
+gr tw (con growth_2008 p if p >= 25000, col(ebblue) lw(medthick) msym(Sh)) ///
+    (con growth_covid p if p >= 25000, col(cranberry) lw(medthick) msym(Oh)), ///
+    xtitle("Percentiles (working-age population)") ytitle("Annualized real labor income growth (%)") ///
+    ylabel(-2(1)3, format(%01.0f)) xlabel(25000 "25-30%" 30000 "30-35%" 35000 "35-40%" ///
+        40000 "40-45%" 45000 "45-50%" 50000 "50-55%" 55000 "55-60%" 60000 "60-65%" ///
+        65000 "65-70%" 70000 "70-75%" 75000 "75-80%" 80000 "80-85%" 85000 "85-90%" ///
+        90000 "90-95%" 95000 "95-99%" 99000 "Top 1%", alternate labsize(small)) ///
+    legend(off) ///
+    text(1.5 40000 "COVID recession" "and recovery" "(02/2020 to 06/2022)", col(cranberry) size(small)) ///
+    text(1.3 75000 "Great recession" "and recovery" "(12/2007 to 12/2017)", col(ebblue) size(small))
+graph export "$graphs/04-analyze-wage-growth/gic-wages.pdf", replace

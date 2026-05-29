@@ -18,19 +18,13 @@ set maxvar 10000
 // Setup local configuration
 // -------------------------------------------------------------------------- //
 
-// The following global macros must be set according to 
-// local computing environment: 
-//   - $root: root directory where the RTI project is located
-//   - $rscript: path to the Rscript executable 
-//	   (used to run R scripts from Stata)
-//   - $pythonscript: path to the Python executable
-//	   (used to run Python scripts from Stata)
+// All local settings (paths and API keys) are stored in a separate file
+// that is not tracked by git. Before running:
+//   1. Copy programs/00-local-config-template.do to programs/00-local-config.do
+//   2. Fill in your local paths and API keys in 00-local-config.do
+// This file must be run from the project root directory.
 
-global root 		"C:\Users\l.mouillet\Dropbox\SaezZucman2014\RealTime\repository\real-time-inequality"
-global rscript 		"C:\Users\l.mouillet\AppData\Local\Programs\R\R-4.5.1\bin\Rscript.exe"
-global pythonscript "C:\Python313\python.exe"
-
-global IPUMS_api_key "59cba10d8a5da536fc06b59d909ddb44e13e46858c214f38b3538623"
+do "programs/00-local-config.do"
 
 // -------------------------------------------------------------------------- //
 // Setup data configuration
@@ -49,8 +43,8 @@ global IPUMS_api_key "59cba10d8a5da536fc06b59d909ddb44e13e46858c214f38b3538623"
 
 global last_year_dina	2024
 global date_begin 		ym(1976, 01)
-global date_end 		ym(2025, 12)
-global update_id 		"2026-02-mouillet"
+global date_end 		ym(2026, 03)
+global update_id 		"2026-05-mouillet"
 
 assert $date_begin <= $date_end
 

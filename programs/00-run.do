@@ -54,15 +54,17 @@ do "$programs/01-import-sm.do"
 // Import data on weekly unemployment insurance claims (*)
 // -------------------------------------------------------
 //
-// Weekly Unemployment Insurance Claims (BOL) [ui]
+// Weekly Unemployment Insurance Claims (DOL) [ui]
 // See: https://oui.doleta.gov/unemploy/claims.asp
 // 
 // The file $rawdata/ui-data/weekly-unemployment-report.xlsx must be
-// dowloaded manually. To do so:
+// updated manually. To do so:
 //  - go to <https://oui.doleta.gov/unemploy/claims.asp>
 //  - select "national", "XML" (not "spreadsheet") and the latest year
-//  - convert the resulting XML file into XLSX, making sure all columns
-//	  have number type (Claude.ai does that very well).
+//  - convert the resulting XML file into XLSX
+//    For that, you can place the xml file in $rawdata/ui-data/ and then run: 
+//    python $rawdata/ui-data/ui_xml_to_xlsx.py
+//    (auto-detects the XML and overwrites weekly-unemployment-report.xlsx)
 //  - save the resulting file under 
 //    $rawdata/ui-data/weekly-unemployment-report.xlsx
 //  - make sure the cell selection in 01-import-ui.do is correct
@@ -464,6 +466,7 @@ do "$programs/02-prepare-bls-employment.do"
 // correspondence between SSA wage distributions and DINA wage distributions for 
 // all years where both are available. 
 
+
 cap mkdir "$work/02-add-ssa-wages"
 shell "$rscript" --vanilla "$programs/02-add-ssa-wages.R" "$work"
 
@@ -560,9 +563,11 @@ do "$programs/02-create-monthly-wages.do"
 // Distribute Paycheck Protection Program
 // --------------------------------------
 
+/*
 cap mkdir "$work/02-distribute-ppp-covid"
 cap mkdir "$graphs/02-distribute-ppp-covid"
 do "$programs/02-distribute-ppp-covid.do"
+*/
 
 // -------------------------------------------------------------------------- //
 // 03 - Build microfiles and online database
@@ -585,6 +590,7 @@ do "$programs/03-build-monthly-microfiles.do"
 // Backtesting version of the microfiles
 // -------------------------------------
 
+/*
 cap mkdir "$work/03-build-monthly-microfiles-backtest-1y"
 cap mkdir "$work/03-build-monthly-microfiles-backtest-1y/microfiles"
 do "$programs/03-build-monthly-microfiles-backtest-1y.do"
@@ -600,6 +606,7 @@ do "$programs/03-build-monthly-microfiles-backtest-rescaling-1y.do"
 cap mkdir "$work/03-build-monthly-microfiles-backtest-rescaling-2y"
 cap mkdir "$work/03-build-monthly-microfiles-backtest-rescaling-2y/microfiles"
 do "$programs/03-build-monthly-microfiles-backtest-rescaling-2y.do"
+*/
 
 // Forbes monthly microfile for top wealth series
 // ----------------------------------------------
@@ -673,14 +680,17 @@ do "$programs/04-plot-gic.do"
 // Backtests
 // ---------
 
+
 cap mkdir "$work/04-backtest"
 cap mkdir "$graphs/04-backtest"
+cap mkdir "$tables/04-backtest"
 do "$programs/04-backtest.do"
 
 cap mkdir "$work/04-backtest-rescaling"
 cap mkdir "$graphs/04-backtest-rescaling"
+cap mkdir "$tables/04-backtest-rescaling"
 do "$programs/04-backtest-rescaling.do"
-
+*/
 
 // Graphs for the paper
 // --------------------------
@@ -699,7 +709,3 @@ do "$programs/04-plot-covid.do"
 
 cap mkdir "$graphs/04-analyze-wage-growth"
 do "$programs/04-analyze-wage-growth.do"
-
-cap mkdir "$work/04-gic-wages"
-cap mkdir "$graphs/04-gic-wages"
-do "$programs/04-gic-wages.do"

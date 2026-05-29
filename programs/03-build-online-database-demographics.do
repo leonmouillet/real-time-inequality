@@ -2,7 +2,7 @@
 // Build the online database for demographics groups
 // -------------------------------------------------------------------------- //
 
-local date_begin = $date_begin
+local date_begin = ym(1976, 01)
 local date_end   = $date_end
 
 // adult_individual: factor_income, pretax_income, disposable_income, posttax_income, wealth

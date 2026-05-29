@@ -3,7 +3,7 @@
 // -------------------------------------------------------------------------- //
 
 cap erase "$work/01-import-pop/pop-data.txt.gz"
-copy "https://seer.cancer.gov/popdata/yr1969_2023.20ages/us.1969_2023.20ages.adjusted.txt.gz" ///
+copy "https://seer.cancer.gov/popdata/yr1969_2024.20ages/us.1969_2024.20ages.adjusted.txt.gz" ///
     "$work/01-import-pop/pop-data.txt.gz"
 cd "$work/01-import-pop"
 cap erase "$work/01-import-pop/pop-data.txt"

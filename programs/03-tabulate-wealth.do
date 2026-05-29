@@ -40,9 +40,9 @@ forval m = 1/4 {
     local t_400_wa = r(sum)
     sum hweal [aw=weight] if !top400, meanonly
     local t_rest = r(sum)
-    frame forbes_all: sum forbes_all if year == 1982 & month == `m', meanonly
+    frame forbes_totals: sum forbes_all if year == 1982 & month == `m', meanonly
 	local t_forbes = r(mean)
-    frame forbes_working_age: sum forbes_working_age if year == 1982 & month == `m', meanonly
+    frame forbes_totals: sum forbes_working_age if year == 1982 & month == `m', meanonly
 	local t_forbes_wa = r(mean)
     post `post_mem' (`t_forbes' / `t_400') (`t_forbes_wa' / `t_400_wa') ((`t_400' + `t_rest' - `t_forbes') / `t_rest')
 }
@@ -71,6 +71,7 @@ forval t = `date_begin' / `date_end' {
 			
 		gen hweal_raw = hweal // used in 03-build-online-database.do
 		
+		// Scale top400 to match total Forbes (aggregate kept constant)
 		if `year' >= 1982 {
 			summarize hweal [aw=weight] if top400, meanonly
 			local tot_top400 = r(sum)

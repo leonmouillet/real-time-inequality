@@ -72,7 +72,7 @@ graph export "$graphs/04-plot-race/black-white-gaps-4.pdf", replace
 
 use "$work/03-tabulate-demographics/tabulation-demographics-adult_equal_split.dta", clear
 keep if demo_type == "race" & inlist(group, "white", "black", "hispanic")
-keep if ym(year, month) >= ym(1989, 01) & ym(year, month) <= ym(2022, 06)
+keep if ym(year, month) >= ym(1989, 01)
 keep year month group peinc
 
 merge n:1 year month using "$work/02-prepare-nipa/nipa-simplified-monthly.dta", ///
@@ -93,8 +93,8 @@ generate peinc_base2006 = 100*peinc/ref
 drop ref
 
 generate cycle = ""
-replace cycle = "Great Recession (2007-2016)" if inrange(year, 2007, 2016)
-replace cycle = "COVID Recession (2020-2022)"  if inrange(year, 2020, 2022)
+replace cycle = "Great Recession (2007-2016)" if inrange(time, yq(2007, 1), yq(2016, 4))
+replace cycle = "COVID Recession (2020-2022)"  if inrange(time, yq(2020, 1), yq(2022, 4))
 drop if cycle == ""
 
 encode group, generate(race_num)

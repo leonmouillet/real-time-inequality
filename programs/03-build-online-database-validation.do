@@ -2,7 +2,7 @@
 // Validation graphs for ultra-top wealth series
 // -------------------------------------------------------------------------- //
 
-local date_begin = $date_begin
+local date_begin = ym(1976, 01)
 local date_end   = $date_end
 
 local grp1  "Top 0.0001%"
@@ -158,7 +158,7 @@ clear
 save `valid_ultra_pop', emptyok
 
 foreach pop_type in adult_equal_split adult_households working_age_equal_split {
-    use "$work/03-tabulate-income/tabulation-hweal-`pop_type'.dta", clear
+    use "$work/03-tabulate-wealth/tabulation-hweal-`pop_type'.dta", clear
     keep if inrange(ym(year, month), `date_begin', `date_end')
 
     foreach frac_tag in f6 f7 {

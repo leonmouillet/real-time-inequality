@@ -3,7 +3,7 @@
 // -------------------------------------------------------------------------- //
 
 clear
-local date_begin = $date_begin
+local date_begin = ym(1976, 01)
 local date_end   = $date_end
 
 local concepts factor_income pretax_income disposable_income posttax_income wealth
@@ -295,13 +295,6 @@ append using `_rescaled_src'
 save "$work/03-build-online-database/ultra-top-sources.dta", replace
 
 // -------------------------------------------------------------------------- //
-// Validation graphs for ultra-top wealth series
-// -------------------------------------------------------------------------- //
-
-cap mkdir "$graphs/03-build-online-database-validation"
-do "$programs/03-build-online-database-validation.do"
-
-// -------------------------------------------------------------------------- //
 // Prepare database
 // -------------------------------------------------------------------------- //
 
@@ -589,3 +582,10 @@ drop bracket_order
 order bracket housing equity other_wealth population unit
 
 export delimited "$website/$update_id/wealth-extrapolation-data.csv", replace
+
+// -------------------------------------------------------------------------- //
+// Validation graphs for ultra-top wealth series
+// -------------------------------------------------------------------------- //
+
+cap mkdir "$graphs/03-build-online-database-validation"
+do "$programs/03-build-online-database-validation.do"

@@ -313,9 +313,9 @@ The code is licensed under the [Modified BSD License](https://opensource.org/lic
 
 ## Instructions to Replicators
 
-- Edit the local configuration section of `programs/00-setup.do` to set `$root`, `$rscript`, and `$pythonscript` for your computing environment.
-- Run `programs/00-setup.do` once at the start of each Stata session to install dependencies and set paths.
-- Run `programs/00-run.do`. 
+- Copy `programs/00-local-config-template.do` to `programs/00-local-config.do` and fill in your local paths (`$root`, `$rscript`, `$pythonscript`) and API keys (`$IPUMS_api_key`, `$FRED_api_key`). This file is gitignored and must not be committed.
+- Run `programs/00-setup.do` once at the start of each Stata session to install dependencies and set paths. It must be run from the project root directory.
+- Run `programs/00-run.do`.
 
 ### Details
 

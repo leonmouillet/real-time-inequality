@@ -79,7 +79,7 @@ local decomp `decomp_hweal'
 local signs  `signs_hweal'
 local ncomp  : word count `decomp'
 
-use "$work/03-tabulate-income/tabulation-hweal-adult_equal_split.dta", clear
+use "$work/03-tabulate-wealth/tabulation-hweal-adult_equal_split.dta", clear
 
 // Deflate
 merge n:1 year month using "$work/02-prepare-nipa/nipa-simplified-monthly.dta", ///

@@ -76,13 +76,34 @@ drop qtr qtrly_emplvl total_qtrly_wages qtrly_cpi cpi
 
 gegen id = group(version area_fips own_code industry_code)
 generate time = ym(year, month)
-
 tsset id time, monthly
 
 egen avg_mthly_wages_ma = filter(avg_mthly_wages), lags(0/11) normalize
+
 // Drop first year of data because of moving average
 drop if version == "SIC" & year == 1975
 drop if version == "NAICS" & year == 1990
+
+/*
+gegen last_t = max(time), by(id)
+generate double ratio_T_tmp = avg_mthly_wages / L12.avg_mthly_wages if time == last_t
+gegen ratio_T = max(ratio_T_tmp), by(id)
+drop ratio_T_tmp
+
+expand 6 if time == last_t, generate(forecast)
+bysort id (time forecast): replace time = last_t + sum(forecast) if forecast
+replace year  = year(dofm(time))  if forecast
+replace month = month(dofm(time)) if forecast
+
+tsset id time, monthly
+replace avg_mthly_wages = L12.avg_mthly_wages * ratio_T if forecast
+egen avg_mthly_wages_ma = filter(avg_mthly_wages), lags(-6/5) normalize
+drop if version == "SIC" & year == 1975 & month <= 6
+drop if version == "NAICS" & year == 1990 & month <= 6
+
+drop if forecast
+drop forecast ratio_T last_t
+*/
 
 // -------------------------------------------------------------------------- //
 // Patch 2022 missing MA values using crosswalk to link with 2021 data
@@ -230,7 +251,7 @@ preserve
 	generate time = ym(year, month)
 	xtset id_temp time, monthly
 	
-	egen avg_mthly_wages_ma_new = filter(avg_mthly_wages), lags(0/11) normalize
+	egen avg_mthly_wages_ma_new = filter(avg_mthly_wages), lags(0/11) normalize // lags(-6/5) normalize
 	
 	keep if year == 2022 & !missing(avg_mthly_wages_ma_new)
 	keep version area_fips own_code industry_code year month avg_mthly_wages_ma_new

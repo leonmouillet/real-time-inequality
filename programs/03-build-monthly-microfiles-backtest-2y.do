@@ -2,7 +2,7 @@
 // Generate monthly DINA files
 // -------------------------------------------------------------------------- //
 
-local date_begin = ym(1976, 01)
+local date_begin = ym(2014, 12)
 local date_end   = ym(2024, 12)
 
 set seed 19920902
@@ -442,8 +442,9 @@ foreach t of numlist `date_begin' / `date_end' {
         drop last_earnings_rank chg_unemployment_rate chg_employment_rate ///
             chg_earnings_rank cell employed employment_rate ///
             new_employment_rate has_ui frac_ui new_frac_ui uiinc ///
-            dina_flemp dina_uiben
+            dina_uiben
         
+        rename dina_flemp dina_flemp_base
         rename employed_new employed
         rename has_ui_new has_ui
         
@@ -513,6 +514,68 @@ foreach t of numlist `date_begin' / `date_end' {
         
         assert !missing(dina_flemp)
         assert !missing(dina_uiben)
+
+        // ------------------------------------------------------------------ //
+        // Adjust taxes and contributions
+        // ------------------------------------------------------------------ //
+
+        noisily di "    -> Adjusting taxes and contributions"
+
+        generate job_loser        = (employed == 0) & (dina_flemp_base > 0)
+        generate job_getter       = (employed == 1) & (dina_flemp_base == 0)
+        generate stably_employed  = (employed == 1) & (dina_flemp_base > 0)
+
+        // Rescale fiscal income components
+        merge n:1 year month using "$work/02-prepare-nipa/nipa-simplified-monthly.dta", ///
+		keepusing(nipa_proprietors nipa_rental nipa_fkfix nipa_fknmo nipa_flemp) ///
+		nogenerate keep(match) assert(match using)
+        foreach compo in proprietors rental fkfix fknmo flemp {
+            summarize dina_`compo' [aw=weight], meanonly
+            local coef = nipa_`compo'[1]/r(sum)
+            replace dina_`compo' = dina_`compo'*`coef'
+        }
+        summarize dina_flemp_base [aw=weight], meanonly
+        local coef = nipa_flemp[1]/r(sum)
+        replace dina_flemp_base = dina_flemp_base*`coef'
+		drop nipa_proprietors nipa_rental nipa_fkfix nipa_fknmo nipa_flemp
+		
+		// Compute fiscal income
+        generate dina_fi_other = dina_proprietors + dina_rental + dina_fkfix - dina_fknmo
+        generate dina_fi_old   = dina_flemp_base + dina_fi_other
+		generate dina_fi       = dina_flemp      + dina_fi_other
+
+        // Taxes rate: average effective rate on fiscal income, from stably employed workers
+        summarize dina_taxes        [aw=weight] if stably_employed, meanonly
+        local avg_taxes = r(mean)
+        summarize dina_fi_old       [aw=weight] if stably_employed, meanonly
+        local tax_rate = `avg_taxes' / r(mean)
+
+        // Contribution rates: average effective rate on wage, from stably employed workers 
+        summarize dina_flemp        [aw=weight] if stably_employed, meanonly
+        local avg_flemp_stable = r(mean)
+        summarize dina_contrib      [aw=weight] if stably_employed, meanonly
+        local contrib_rate = r(mean) / `avg_flemp_stable'
+        summarize dina_othercontrib [aw=weight] if stably_employed, meanonly
+        local oc_rate = r(mean) / `avg_flemp_stable'
+
+        // Job-losers: scale taxes by income drop and zero out wage-based contributions
+        replace dina_taxes        = dina_taxes * max(0, dina_fi_other / dina_fi_old) ///
+            if job_loser & (dina_fi_old > 0)
+        replace dina_contrib      = 0 if job_loser
+        replace dina_othercontrib = 0 if job_loser
+
+        // Job-getters: apply average effective rate to new fiscal income and new wage
+        replace dina_taxes        = max(dina_taxes, `tax_rate' * dina_fi)	if job_getter
+        replace dina_contrib      = `contrib_rate' * dina_flemp             if job_getter
+        replace dina_othercontrib = `oc_rate'      * dina_flemp             if job_getter
+
+		// Stably employed: scale taxes by income change
+		replace dina_taxes        = dina_taxes * max(0, dina_fi / dina_fi_old) ///
+            if stably_employed & (dina_fi_old > 0) & (dina_fi > 0)
+        replace dina_contrib      = dina_contrib      * (dina_flemp / dina_flemp_base) if stably_employed
+        replace dina_othercontrib = dina_othercontrib * (dina_flemp / dina_flemp_base) if stably_employed
+
+        drop job_loser job_getter stably_employed dina_fi_other dina_fi_old dina_fi dina_flemp_base
         
         // ------------------------------------------------------------------ //
         // Rescale income components
@@ -765,8 +828,8 @@ foreach t of numlist `date_begin' / `date_end' {
                                  mortgage_owner equ_scorp equ_nscorp business pensions nonmortage fixed {
                                      
                 generate `compo' = dina_`compo'/dina_hweal*forbes_wealth/800 if top400
-                
-                summarize dina_`compo' [aw=weight] if top400, meanonly
+
+                summarize `compo' [aw=weight] if top400, meanonly
                 local tot_forbes = r(sum)
                 summarize dina_`compo' [aw=weight] if !top400, meanonly
                 local coef = (fa_`compo'[1] - `tot_forbes')/r(sum)

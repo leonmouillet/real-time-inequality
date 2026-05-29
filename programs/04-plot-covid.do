@@ -60,7 +60,6 @@ generate time = ym(year, month)
 format time %tm
 save `tab_bot50', replace
 
-
 use `tab_bot50', clear
 keep if bracket == "Bottom 50%"
 
@@ -89,10 +88,11 @@ generate deficit_min = princ
 generate deficit_max = princ + prisupgov - prodtax + govin
 replace deficit_max = 0 if deficit_max < 0
 
+
 // Start from factor national income
 gr tw (con princ time, lw(medthick) col(black) msym(Oh)), ///
     ylabel(, format(%9.0gc)) ytitle("Monthly income per adult (constant USD)") ///
-    yscale(range(0 6200)) ylabel(0(500)6000) ///
+    yscale(range(0 5500)) ylabel(0(500)5500) ///
     xtitle("") xsize(6) ysize(3) xlabel(`=ym(2019, 6)'(6)`=ym(2022, 12)', alternate) ///
     legend(pos(4) cols(1) region(margin(0 0 10 0)) ///
         label(1 "{bf:Factor national income}" "{it:(matching national income)}") ///
@@ -104,7 +104,7 @@ graph export "$graphs/04-plot-covid/presentation-bot50-step1.pdf", replace
 gr tw (rarea covidsub_min covidsub_max time, col(ebblue) lw(none)) ///
     (con princ time, lw(medthick) col(black) msym(Oh)), ///
     ylabel(, format(%9.0gc)) ytitle("Monthly income per adult (constant USD)") ///
-    yscale(range(0 6200)) ylabel(0(500)6000) ///
+    yscale(range(0 5500)) ylabel(0(500)5500) ///
     xtitle("") xsize(6) ysize(3) xlabel(`=ym(2019, 6)'(6)`=ym(2022, 12)', alternate) ///
     legend(pos(4) cols(1) region(margin(0 0 10 0)) ///
         label(1 "Paycheck Protection Program") ///
@@ -118,7 +118,7 @@ gr tw (rarea covidsub_min covidsub_max time, col(ebblue) lw(none)) ///
     (con princ time, lw(medthick) col(black) msym(Oh)) ///
     (con covidsub_max time, lw(medthick) col(black) msym(Sh)), ///
     ylabel(, format(%9.0gc)) ytitle("Monthly income per adult (constant USD)") ///
-    yscale(range(0 6200)) ylabel(0(500)6000) ///
+    yscale(range(0 5500)) ylabel(0(500)5500) ///
     xtitle("") xsize(6) ysize(3) xlabel(`=ym(2019, 6)'(6)`=ym(2022, 12)', alternate) ///
     legend(pos(4) cols(1) region(margin(0 0 10 0)) ///
         label(1 "Paycheck Protection Program") ///
@@ -134,7 +134,7 @@ gr tw (rarea covidsub_min covidsub_max time, col(ebblue) lw(none)) ///
     (con princ time, lw(medthick) col(black) msym(Oh)) ///
     (con covidsub_max time, lw(medthick) col(black) msym(Sh)), ///
     ylabel(, format(%9.0gc)) ytitle("Monthly income per adult (constant USD)") ///
-    yscale(range(0 6200)) ylabel(0(500)6000) xlabel(`=ym(2019, 6)'(6)`=ym(2022, 12)', alternate) ///
+    yscale(range(0 5500)) ylabel(0(500)5500) xlabel(`=ym(2019, 6)'(6)`=ym(2022, 12)', alternate) ///
     xtitle("") xsize(6) ysize(3) ///
     legend(pos(4) cols(1) region(margin(0 0 10 0)) ///
         label(1 "Paycheck Protection Program") ///
@@ -152,7 +152,7 @@ gr tw (rarea covidsub_min covidsub_max time, col(ebblue) lw(none)) ///
     (con princ time, lw(medthick) col(black) msym(Oh)) ///
     (con covidsub_max time, lw(medthick) col(black) msym(Sh)), ///
     ylabel(, format(%9.0gc)) ytitle("Monthly income per adult (constant USD)") ///
-    yscale(range(0 6200)) ylabel(0(500)6000) ///
+    yscale(range(0 5500)) ylabel(0(500)5500) ///
     xtitle("") xsize(6) ysize(3) xlabel(`=ym(2019, 6)'(6)`=ym(2022, 12)', alternate) ///
     legend(pos(4) cols(1) region(margin(0 0 10 0)) ///
         label(1 "Paycheck Protection Program") ///
@@ -172,7 +172,7 @@ gr tw (rarea covidsub_min covidsub_max time, col(ebblue) lw(none)) ///
     (con covidsub_max time, lw(medthick) col(black) msym(Sh)) ///
     (con penben_max time, lw(medthick) col(black) msym(Th)), ///
     ylabel(, format(%9.0gc)) ytitle("Monthly income per adult (constant USD)") ///
-    yscale(range(0 6200)) ylabel(0(500)6000) ///
+    yscale(range(0 5500)) ylabel(0(500)5500) ///
     xtitle("") xsize(6) ysize(3) xlabel(`=ym(2019, 6)'(6)`=ym(2022, 12)', alternate) ///
     legend(pos(4) cols(1) region(margin(0 0 10 0)) ///
         label(1 "Paycheck Protection Program") ///
@@ -194,7 +194,7 @@ gr tw (rarea covidsub_min covidsub_max time, col(ebblue) lw(none)) ///
     (con covidsub_max time, lw(medthick) col(black) msym(Sh)) ///
     (con penben_max time, lw(medthick) col(black) msym(Th)), ///
     ylabel(, format(%9.0gc)) ytitle("Monthly income per adult (constant USD)") ///
-    yscale(range(0 6200)) ylabel(0(500)6000) ///
+    yscale(range(0 5500)) ylabel(0(500)5500) ///
     xtitle("") xsize(6) ysize(3) xlabel(`=ym(2019, 6)'(6)`=ym(2022, 12)', alternate) ///
     legend(pos(4) cols(1) region(margin(0 0 10 0)) ///
         label(1 "Paycheck Protection Program") ///
@@ -218,7 +218,7 @@ gr tw (rarea covidsub_min covidsub_max time, col(ebblue) lw(none)) ///
     (con covidsub_max time, lw(medthick) col(black) msym(Sh)) ///
     (con penben_max time, lw(medthick) col(black) msym(Th)), ///
     ylabel(, format(%9.0gc)) ytitle("Monthly income per adult (constant USD)") ///
-    yscale(range(0 6200)) ylabel(0(500)6000) ///
+    yscale(range(0 5500)) ylabel(0(500)5500) ///
     xtitle("") xsize(6) ysize(3) xlabel(`=ym(2019, 6)'(6)`=ym(2022, 12)', alternate) ///
     legend(pos(4) cols(1) region(margin(0 0 10 0)) ///
         label(1 "Paycheck Protection Program") ///
@@ -244,7 +244,7 @@ gr tw (rarea covidsub_min covidsub_max time, col(ebblue) lw(none)) ///
     (con penben_max time, lw(medthick) col(black) msym(Th)) ///
     (con covidrelief_max time, lw(medthick) col(black) msym(Dh)), ///
     ylabel(, format(%9.0gc)) ytitle("Monthly income per adult (constant USD)") ///
-    yscale(range(0 6200)) ylabel(0(500)6000) ///
+    yscale(range(0 5500)) ylabel(0(500)5500) ///
     xtitle("") xsize(6) ysize(3) xlabel(`=ym(2019, 6)'(6)`=ym(2022, 12)', alternate) ///
     legend(pos(4) cols(1) region(margin(0 0 10 0)) ///
         label(1 "Paycheck Protection Program") ///
@@ -537,10 +537,10 @@ graph export "$graphs/04-plot-covid/presentation-evolution-dispo.pdf", replace
 // Compare evolution of average wealth
 // -------------------------------------------------------------------------- //
 
-use "$work/03-tabulate-income/tabulation-hweal-adult_equal_split.dta", clear
+use "$work/03-tabulate-wealth/tabulation-hweal-adult_equal_split.dta", clear
 
 keep if ym(year, month) >= ym(2019, 07)
-keep if ym(year, month) <= ym(2023, 07)
+keep if ym(year, month) <= ym(2022, 12)
 
 merge n:1 year month using "$work/02-prepare-nipa/nipa-simplified-monthly.dta", ///
     nogenerate keepusing(nipa_deflator) keep(master match) assert(match using)
@@ -555,7 +555,7 @@ replace bracket = "top10" if inrange(p, 9000000, 9800000)
 replace bracket = "top1"  if inrange(p, 9900000, 9980000)
 replace bracket = "top01" if inrange(p, 9990000, 9999999)
 
-gcollapse (sum) hweal (mean) nipa_deflator [pw=n], by(year month bracket)
+gcollapse (sum) hweal (mean) nipa_deflator [pw=pop], by(year month bracket)
 
 generate time = ym(year, month)
 format time %tm
@@ -582,8 +582,8 @@ preserve
         (con hwealtop1 time, lw(medthick) msym(Th) col(green)) ///
         (con hwealtop01 time, lw(medthick) msym(Dh) col(dkorange)), ///
         ytitle("Average wealth per adult (constant USD)" "07/2019 = 100") ///
-        xtitle("") xsize(6) ysize(4) scale(1.2) xscale(range(`=ym(2019, 6)' `=ym(2023, 6)')) xlabel(`=ym(2019, 6)'(6)`=ym(2023, 6)', alternate) ///
-        legend(ring(0) bplacement(5) bmargin(0 5 1 0) cols(1) ///
+        xtitle("") xsize(6) ysize(4) scale(1.2) xscale(range(`=ym(2019, 6)' `=ym(2023, 02)')) xlabel(`=ym(2019, 6)'(6)`=ym(2022, 12)', alternate) ///
+        legend(ring(0) bplacement(10) bmargin(0 5 1 0) cols(1) ///
             label(1 "Middle 40%") ///
             label(2 "Top 10%") ///
             label(3 "Top 1%") ///
@@ -618,30 +618,65 @@ merge 1:1 year month using "`bot50'", nogenerate keep(match)
 generate time = ym(year, month)
 format time %tm
 
+// Normalize at the beginning of the Great Recession
+preserve
+	keep if ym(year, month) >= ym(2007, 12)
+	keep if ym(year, month) <= ym(2022, 12)
+	foreach v of varlist princ_bot50 princ_total {
+		generate init = `v'[1]
+		replace `v' = 100*`v'/init
+		drop init
+	}
+
+	gr tw (line princ_bot50 princ_total time, ///
+			lw(medthick..) lcol(ebblue cranberry) lp(solid dash)), ///
+		ylabel(100 114, labsize(small) glcol(black)) ///
+		xlabel(`=ym(2008, 01)' `=ym(2012, 01)' `=ym(2016, 01)' `=ym(2020, 02)' `=ym(2021, 01)' `=ym(2022, 01)' `=ym(2022, 12)', angle(45) labsize(small) glcol(black)) ///
+		title("Real factor income from the start of the Great Recession to the end of the COVID crisis" "(January 2008 - December 2022)", size(small)) ///
+		xtitle("") ///
+		ytitle("Real average factor income per adult" "(Index, 100 in 12/2007)", size(small)) ///
+		/* 
+		xline(`=ym(2012, 01)', lcol(black) lw(thin) lp(dot)) ///
+		xline(`=ym(2016, 01)', lcol(black) lw(thin) lp(dot)) ///
+		xline(`=ym(2020, 02)', lcol(black) lw(thin) lp(dot)) ///
+		xline(`=ym(2021, 01)', lcol(black) lw(thin) lp(dot)) ///
+		xline(`=ym(2022, 01)', lcol(black) lw(thin) lp(dot)) ///
+		xline(`=ym(2022, 12)', lcol(black) lw(thin) lp(dot)) ///
+		yline(100, lcol(black) lp(dash) lw(thin)) ///
+		//yline(114, lcol(black) lp(dash) lw(thin)) /// 
+		*/ legend(ring(1) bplacement(6) cols(2) size(small) ///
+            label(1 "Bottom 50%") ///
+            label(2 "All working-age adults") order(2 1) ///
+        )
+	gr export "$graphs/04-plot-covid/bot50-recessions-full-period.pdf", replace
+restore
+
 // Normalize at the beginning of each recession
-keep if ym(year, month) >= ym(2007, 12)
-generate period = (ym(year, month) >= ym(2020, 02))
-generate elapsed = ym(year, month) - ym(2007, 12) if period == 0
-replace elapsed = ym(year, month) - ym(2020, 02) if period == 1
-keep if elapsed <= 120
+preserve
+	keep if ym(year, month) >= ym(2007, 12)
+	generate period = (ym(year, month) >= ym(2020, 02))
+	generate elapsed = ym(year, month) - ym(2007, 12) if period == 0
+	replace elapsed = ym(year, month) - ym(2020, 02) if period == 1
+	keep if elapsed <= 120
 
-keep year month princ_bot50 princ_total time elapsed period
-reshape wide year month princ_bot50 princ_total time, i(elapsed) j(period)
+	keep year month princ_bot50 princ_total time elapsed period
+	reshape wide year month princ_bot50 princ_total time, i(elapsed) j(period)
 
-foreach v of varlist princ* {
-    generate init = `v'[1]
-    replace `v' = 100*`v'/init
-    drop init
-}
+	foreach v of varlist princ* {
+		generate init = `v'[1]
+		replace `v' = 100*`v'/init
+		drop init
+	}
 
-gr tw (line princ_bot500 princ_bot501 princ_total0 princ_total1 elapsed, ///
-        lw(medthick..) lcol(ebblue ebblue cranberry cranberry) lp(solid dash solid dash)), ///
-    legend(off) ///
-    xlabel(0(12)120) xtitle("Months after recession started") ///
-    ytitle("Real average factor income per working-age adult" "(Index, 100 in the month preceding the recession)") ///
-    yline(100, lcol(black)) ///
-    text(83.5 40 "Bottom 50%" "(Great recession)", col(ebblue) size(small)) ///
-    text(108 90 "Working-age adults" "(Great recession)", col(cranberry) size(small)) ///
-    text(77 6 "Bottom 50%" "(COVID recession)", col(ebblue) size(small) justification(left) placement(right)) ///
-    text(105.5 20 "Working-age adults" "(COVID recession)", col(cranberry) size(small) justification(left) placement(right))
-gr export "$graphs/04-plot-covid/bot50-recessions.pdf", replace
+	gr tw (line princ_bot500 princ_bot501 princ_total0 princ_total1 elapsed, ///
+			lw(medthick..) lcol(ebblue ebblue cranberry cranberry) lp(solid dash solid dash)), ///
+		legend(off) ///
+		xlabel(0(12)120) xtitle("Months after recession started") ///
+		ytitle("Real average factor income per working-age adult" "(Index, 100 in the month preceding the recession)") ///
+		yline(100, lcol(black)) ///
+		text(83 40 "Bottom 50%" "(Great recession)", col(ebblue) size(small)) ///
+		text(108 90 "Working-age adults" "(Great recession)", col(cranberry) size(small)) ///
+		text(77 6 "Bottom 50%" "(COVID recession)", col(ebblue) size(small) justification(left) placement(right)) ///
+		text(106.5 3 "Working-age adults" "(COVID recession)", col(cranberry) size(small) justification(left) placement(right))
+	gr export "$graphs/04-plot-covid/bot50-recessions.pdf", replace
+restore

@@ -5,7 +5,7 @@
 local date_begin = $date_begin
 local date_end   = $date_end
 
-foreach concept in peinc princ dispo poinc hweal {
+foreach concept in peinc princ dispo poinc /*hweal*/ {
 	foreach pop in adult_equal_split working_age_equal_split adult_households {
 		local outfile "$work/03-tabulate-income/tabulation-`concept'-`pop'.dta"
 		cap confirm file "`outfile'"
@@ -89,18 +89,8 @@ forval t = `date_begin' / `date_end' {
 				// Compute rank (sorted by concept)
 				gsort `concept'
 				gen rank = sum(weight)
-
-				// Wealth: 1e7 scale for ultra-fine top resolution (top 0.0001% and top 0.00001%)
-				// Other concepts: standard 1e5 scale
-				if ("`concept'" == "hweal") {
-					replace rank = 1e7*(rank - weight/2)/rank[_N]
-					gegen p = cut(rank), at(0(100000)9900000 9910000(10000)9990000 9991000(1000)9999000 ///
-					9999100(100)9999900 9999910(10)9999990 9999991(1)9999999 10000001)
-				}
-				else {
-					replace rank = 1e5*(rank - weight/2)/rank[_N]
-					gegen p = cut(rank), at(0(1000)99000 99100(100)99900 99910(10)99990 99991(1)99999 100001)
-				}
+				replace rank = 1e5*(rank - weight/2)/rank[_N]
+				gegen p = cut(rank), at(0(1000)99000 99100(100)99900 99910(10)99990 99991(1)99999 100001)
 
 				// Tabulate: mean components, min threshold, obs count, population
 				generate one = 1
