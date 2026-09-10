@@ -4,6 +4,14 @@ All notable changes to the RTI project are documented in this file.
 
 ---
 
+## 2026-05-mouillet
+
+### Changed
+
+- **01-import-ici.do**: The ICI report is no longer downloaded from a URL. It must now be downloaded manually from <https://www.ici.org/research/stats/retirement> and saved as `raw-data/ici-data/ret_data.xls`.
+
+---
+
 ## 2026-03-mouillet
 
 ### Fixed

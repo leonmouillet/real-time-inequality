@@ -6,7 +6,7 @@
 // Stock data
 // -------------------------------------------------------------------------- //
 
-import excel "https://www.ici.org/statistical-report/ret_25_q4_data.xls", sheet("Table 19") clear
+import excel "$rawdata/ici-data/ret_data.xls", sheet("Table 19") clear
 
 keep if ustrregexm(A, "^[0-9][0-9][0-9][0-9](:Q[1-4])?$")
 
@@ -38,7 +38,7 @@ save "$work/01-import-ici/ici-data-stocks.dta", replace
 // Flow data (IRAs)
 // -------------------------------------------------------------------------- //
 
-import excel "https://www.ici.org/statistical-report/ret_25_q3_data.xls", sheet("Table 11") clear
+import excel "$rawdata/ici-data/ret_data.xls", sheet("Table 11") clear
 
 keep if ustrregexm(A, "^[0-9][0-9][0-9][0-9]$")
 
@@ -51,7 +51,7 @@ rename B contrib_ira_tradi
 tempfile tradi
 save "`tradi'", replace
 
-import excel "https://www.ici.org/statistical-report/ret_25_q3_data.xls", sheet("Table 13") clear
+import excel "$rawdata/ici-data/ret_data.xls", sheet("Table 13") clear
 
 generate type = ""
 replace type = "_sep" if strpos(A, "SEP")

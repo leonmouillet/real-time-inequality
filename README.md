@@ -72,7 +72,13 @@ We use population data by age from the National Cancer Institute's Surveillance,
 
 #### Quarterly Retirement Market Data from the Investment Company Institute (ICI)
 
-We use the ICI data to obtain the composition of pension funds. This data is publicly available. It is automatically downloaded from <https://www.ici.org/research/stats/retirement> and stored in the repository under `work-data/01-import-ici`.
+We use the ICI data to obtain the composition of pension funds. This data is publicly available, but it needs to be manually downloaded:
+
+- go to <https://www.ici.org/research/stats/retirement>
+- download the most recent "U.S. Retirement Market" report (XLS file)
+- save the result as `raw-data/ici-data/ret_data.xls`
+
+The file is imported by `01-import-ici.do` and stored in the repository under `work-data/01-import-ici`.
 
 #### Effects of Selected Federal Pandemic Response Programs on Personal Income from the Bureau of Economic Analysis (BEA)
 

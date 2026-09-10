@@ -180,12 +180,10 @@ do "$programs/01-import-pop.do"
 // ICI data on the composition of pension funds [ici]
 // See: https://www.ici.org/research/stats/retirement
 //
-// The ICI data are downloaded automatically, but the filename must be
-// updated manually to match the most recent release.
-// To do so:
+// The ICI data must be downloaded manually. To do so:
 //   - Go to <https://www.ici.org/research/stats/retirement>
-//   - Copy the link to the most recent "U.S. Retirement Market" report (XLS file)
-//   - Paste this link into all import commands in 01-import-ici.do
+//   - Download the most recent "U.S. Retirement Market" report (XLS file)
+//   - Save the file into $rawdata/ici-data/ret_data.xls
 
 cap mkdir "$work/01-import-ici"
 do "$programs/01-import-ici.do"
@@ -466,7 +464,6 @@ do "$programs/02-prepare-bls-employment.do"
 // correspondence between SSA wage distributions and DINA wage distributions for 
 // all years where both are available. 
 
-
 cap mkdir "$work/02-add-ssa-wages"
 shell "$rscript" --vanilla "$programs/02-add-ssa-wages.R" "$work"
 
@@ -514,6 +511,7 @@ do "$programs/02-match-dina-transport.do"
 cap mkdir "$work/02-prepare-dina"
 cap mkdir "$graphs/02-prepare-dina"
 do "$programs/02-prepare-dina.do"
+
 
 // Prepare series on UI benefits recipients (*)
 // --------------------------------------------
