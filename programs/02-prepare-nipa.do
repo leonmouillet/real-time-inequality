@@ -756,6 +756,7 @@ drop quarter quarterly_profits
 // -------------------------------------------------------------------------- //
 
 replace covid_subsidies_mthly = 0 if ym(year, month) < ym(2020, 04)
+replace covid_subsidies_mthly = 0 if ym(year, month) > ym(2022, 03)
 
 // Factor income
 // -------------
@@ -1038,7 +1039,7 @@ enforce ///
         nipa_corr_otherkin + nipa_corr_govin + nipa_corr_colexp + nipa_corr_prisupenprivate + nipa_corr_prisupgov) ///
     (nipa_corr_princ = nipa_corr_peinc) ///
     (nipa_corr_princ = nipa_corr_poinc), ///
-    replace
+    replace zero(1e3)
 
 // -------------------------------------------------------------------------- //
 // Plot: correction for outliers
