@@ -4,7 +4,7 @@
 
 // Range of years to update
 local year_begin = 2025
-local year_end = 2025
+local year_end = 2026
 
 // -------------------------------------------------------------------------- //
 // Download the data

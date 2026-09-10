@@ -13,6 +13,7 @@ raw-data/acs-data
 raw-data/sec-data
 raw-data/yahoo-data
 raw-data/fred-data
+raw-data/ici-data
 raw-data/*/old
 sandbox
 

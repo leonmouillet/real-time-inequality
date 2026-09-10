@@ -14,9 +14,16 @@ API_KEY       = "59cba10d8a5da536fc06b59d909ddb44e13e46858c214f38b3538623"
 RAWDATA       = sys.argv[1] if len(sys.argv) > 1 else "raw-data"
 POLL_INTERVAL = 30
 MAX_WAIT      = 3600
+RETRIES       = 5
 
-CPS_BASE  = "https://api.ipums.org"
-USA_BASE  = "https://api.ipums.org"
+# If extracts already submitted to IPUMS: skip submission and poll these numbers
+# directly. Leave empty ({}) to submit new extracts.
+# RESUME = {
+#     "cps-monthly": 22,
+#     "cps":         23,
+#     "usa":         12,
+# }
+RESUME = {}
 
 # --- Extracts definition -----------------------------------------------------
 
@@ -84,16 +91,23 @@ EXTRACTS = [
 
 # --- API helpers -------------------------------------------------------------
 
-def api(product, method, path, data=None):
+def api(product, method, path, data=None, retries=RETRIES):
     url = f"https://api.ipums.org{path}"
     headers = {"Authorization": API_KEY, "Content-Type": "application/json"}
     body = json.dumps(data).encode() if data else None
-    req = urllib.request.Request(url, data=body, headers=headers, method=method)
-    try:
-        with urllib.request.urlopen(req) as r:
-            return json.loads(r.read())
-    except urllib.error.HTTPError as e:
-        raise RuntimeError(f"API error {e.code}: {e.read().decode()}") from None
+    for attempt in range(retries):
+        req = urllib.request.Request(url, data=body, headers=headers, method=method)
+        try:
+            with urllib.request.urlopen(req, timeout=60) as r:
+                return json.loads(r.read())
+        except urllib.error.HTTPError as e:
+            raise RuntimeError(f"API error {e.code}: {e.read().decode()}") from None
+        except (urllib.error.URLError, TimeoutError, OSError) as e:
+            if attempt == retries - 1:
+                raise
+            wait = 2 ** attempt * 10
+            print(f"  Reseau indisponible ({e}), nouvelle tentative dans {wait}s...")
+            time.sleep(wait)
 
 def fetch_samples(product):
     samples, page = [], 1
@@ -116,18 +130,27 @@ def submit_extract(product, extract_def, samples):
 
 def poll_until_complete(product, number):
     for _ in range(MAX_WAIT // POLL_INTERVAL):
-        time.sleep(POLL_INTERVAL)
         status = api(product, "GET", f"/extracts/{number}?product={product}&version=2")
         if status["status"] == "completed":
             return status
         if status["status"] == "failed":
             raise RuntimeError(f"Extract #{number} failed")
+        time.sleep(POLL_INTERVAL)
     raise TimeoutError(f"Extract #{number} timed out")
-
-def download_file(url, dest):
-    req = urllib.request.Request(url, headers={"Authorization": API_KEY})
-    with urllib.request.urlopen(req) as r, open(dest, "wb") as f:
-        shutil.copyfileobj(r, f)
+ 
+def download_file(url, dest, retries=RETRIES):
+    for attempt in range(retries):
+        req = urllib.request.Request(url, headers={"Authorization": API_KEY})
+        try:
+            with urllib.request.urlopen(req, timeout=300) as r, open(dest, "wb") as f:
+                shutil.copyfileobj(r, f)
+            return
+        except (urllib.error.URLError, TimeoutError, OSError) as e:
+            if attempt == retries - 1:
+                raise
+            wait = 2 ** attempt * 10
+            print(f"  Telechargement interrompu ({e}), nouvelle tentative dans {wait}s...")
+            time.sleep(wait)
 
 def download_extract(status, output_dir, output_name):
     os.makedirs(output_dir, exist_ok=True)
@@ -140,19 +163,25 @@ def download_extract(status, output_dir, output_name):
 
 # --- Main --------------------------------------------------------------------
 
-# Submit all extracts first, then wait for all in parallel
+
+# Submit all extracts first (or resume existing ones), then wait for all
 submitted = []
 for ext in EXTRACTS:
+    name = ext["output_name"]
+    if name in RESUME:
+        submitted.append((ext, RESUME[name]))
+        print(f"[{name}] Resuming extract #{RESUME[name]}.")
+        continue
     all_samples = fetch_samples(ext["product"])
     samples = {s["name"]: {} for s in all_samples if ext["sample_filter"](s)}
-    print(f"[{ext['output_name']}] Submitting with {len(samples)} samples...")
+    print(f"[{name}] Submitting with {len(samples)} samples...")
     if not samples:
-        print(f"[{ext['output_name']}] ERROR: no samples matched, skipping.")
+        print(f"[{name}] ERROR: no samples matched, skipping.")
         continue
     result = submit_extract(ext["product"], ext, samples)
     submitted.append((ext, result["number"]))
-    print(f"[{ext['output_name']}] Extract #{result['number']} submitted.")
-
+    print(f"[{name}] Extract #{result['number']} submitted.")
+ 
 print("\nWaiting for completion...")
 for ext, number in submitted:
     print(f"[{ext['output_name']}] Polling extract #{number}...")

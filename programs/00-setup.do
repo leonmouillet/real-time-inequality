@@ -24,7 +24,7 @@ set maxvar 10000
 //   2. Fill in your local paths and API keys in 00-local-config.do
 // This file must be run from the project root directory.
 
-do "programs/00-local-config.do"
+do "00-local-config.do"
 
 // -------------------------------------------------------------------------- //
 // Setup data configuration
@@ -42,8 +42,8 @@ do "programs/00-local-config.do"
 //     $website. Use syntax "updater-YYYY-MM". 
 
 global last_year_dina	2024
-global date_begin 		ym(1976, 01)
-global date_end 		ym(2026, 03)
+global date_begin 		ym(2026, 01)
+global date_end 		ym(2026, 06)
 global update_id 		"2026-05-mouillet"
 
 assert $date_begin <= $date_end
