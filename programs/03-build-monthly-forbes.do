@@ -22,12 +22,53 @@
 // -------------------------------------------------------------------------- //
 
 import delimited "$rawdata/forbes-data/forbes.csv", clear varnames(1) case(lower)
-keep if countryofcitizenship == "United States"
-keep uri personname year month rank finalworth privateassetsworth state birthdate
+
+// Forbes real-time list is worldwide
+// US-resident individuals are identified by the 'state' variable
+
+local us_states  `" "Alabama" "Alaska" "Arizona" "Arkansas" "California" "'
+local us_states `"`us_states' "Colorado" "Connecticut" "Delaware" "Florida" "'
+local us_states `"`us_states' "Georgia" "Hawaii" "Idaho" "Illinois" "Indiana" "'
+local us_states `"`us_states' "Iowa" "Kansas" "Kentucky" "Louisiana" "Maine" "'
+local us_states `"`us_states' "Maryland" "Massachusetts" "Michigan" "Minnesota" "'
+local us_states `"`us_states' "Mississippi" "Missouri" "Montana" "Nebraska" "'
+local us_states `"`us_states' "Nevada" "New Hampshire" "New Jersey" "New Mexico" "'
+local us_states `"`us_states' "New York" "North Carolina" "North Dakota" "Ohio" "'
+local us_states `"`us_states' "Oklahoma" "Oregon" "Pennsylvania" "Rhode Island" "'
+local us_states `"`us_states' "South Carolina" "South Dakota" "Tennessee" "Texas" "'
+local us_states `"`us_states' "Utah" "Vermont" "Virginia" "Washington" "'
+local us_states `"`us_states' "West Virginia" "Wisconsin" "Wyoming" "'
+local us_states `"`us_states' "District of Columbia" "'
+
+generate byte us_resident = 0
+foreach s of local us_states {
+    replace us_resident = 1 if state == "`s'"
+}
+assert us_resident == 1 if inlist(state, "California", "New York", "Texas")
+
+keep uri personname year month rank finalworth privateassetsworth state city ///
+     birthdate us_resident
 rename (uri personname finalworth privateassetsworth) ///
        (forbes_uri name worth_m private_m)
-	   
+
 destring worth_m private_m year month rank birthdate, replace force
+
+// Forbes intermittently blanks a person's location. When 'state' AND 'city'
+// are both empty the row carries no residence information at all, so we carry
+// the person's nearest known residence across the gap ('forbes_uri' is stable
+// over time). A blank 'state' with a non-empty 'city' is a genuine move abroad
+// (London, Singapore, Munich, ...) and is left excluded.
+
+generate int t = year*12 + month
+generate byte blank_loc = (trim(state) == "" & trim(city) == "")
+generate byte us_known  = us_resident if trim(state) != ""
+bysort forbes_uri (t): replace us_known = us_known[_n-1] if missing(us_known) & _n > 1
+generate int negt = -t
+bysort forbes_uri (negt): replace us_known = us_known[_n-1] if missing(us_known) & _n > 1
+replace us_resident = us_known if blank_loc & !missing(us_known)
+
+keep if us_resident == 1
+drop us_resident us_known blank_loc t negt city
 generate birth_year = year(dofC(birthdate + 315619200000)) if !missing(birthdate)
 drop birthdate
 keep if !missing(worth_m) & worth_m > 0
@@ -86,6 +127,12 @@ save `tick_monthly'
 
 import delimited "$rawdata/forbes-data/forbes400_8225_all.csv", ///
     clear stringcols(2 3 4 11 12 13 14 15 16 17 18) case(lower)
+
+// 'country' here is the country of residence, not citizenship
+// The Forbes 400 universe is itself restricted to US citizens: no US-resident
+// non-citizen appears anywhere in annual Forbes 400 data covering 1982-2025.
+// So the annual criterion is 'US citizen AND US resident', which is the closest
+// proxy the source allows for the residence universe used from 2020 onwards.
 
 keep if country == "United States"
 
