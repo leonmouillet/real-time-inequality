@@ -18,6 +18,7 @@ raw-data/*/old
 sandbox
 
 programs/00-local-config.do
+TODO.txt
 raw-data/ui-data/r539cy.xml
 instructions.pdf
 *.scheme
