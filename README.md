@@ -304,7 +304,7 @@ Portions of the code (the optimal transport algorithms) were last run on a **8-c
   - `outputs/graphs`: figures produced by the code, divided into subfolders by program.
   - `outputs/tables`: tables produced by the code, divided into subfolders by program.
   - `outputs/microfiles`: versioned synthetic microfiles produced by `03-build-monthly-microfiles.do`.
-  - `outputs/website`: versioned data files used by the website, produced by the `03-build-online-database*.do` scripts.
+  - `outputs/website`: versioned data files used by the website, produced by `03-build-website-payload.py`.
 - The folder `programs` contains all the code.
   - The codes named `programs/01-*` handle the retrieval of the raw data, either directly from the internet or from the folder `raw-data`.
   - The codes named `programs/02-*` handle preliminary treatments of the data.
@@ -335,7 +335,7 @@ The code is licensed under the [Modified BSD License](https://opensource.org/lic
   - The codes primarily generate data in the `work-data` folder that is used to generate the synthetic microfiles.
 - `programs/03-*`
   - The codes produce the synthetic microfiles, including backtesting versions of the microfiles that use older tax data, and rescaling versions that only use information on macro aggregates.
-  - Codes in that section also produce the databases that are used for the website <http://realtimeinequality.org/>. These files are stored in the folder `outputs/website`.
+  - Codes in that section also produce the databases that are used for the website <http://realtimeinequality.org/>.
 - `programs/04-*`
   - Use the microfiles and related outputs to create the tables and figures included in the paper (see below).
 

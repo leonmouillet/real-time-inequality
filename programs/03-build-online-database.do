@@ -443,7 +443,7 @@ restore
 // Export databases
 // -------------------------------------------------------------------------- //
 
-export delimited "$website/$update_id/online-database.csv", replace
+export delimited "$work/03-build-online-database/online-database.csv", replace
 
 // Population + deflator file
 keep if group == "Total"
@@ -454,7 +454,7 @@ rename popadult_equal_split pop_adults
 rename popadult_households pop_households
 rename popworking_age_equal_split pop_working_age
 
-export delimited "$website/$update_id/online-database-popul-deflator.csv", replace
+export delimited "$work/03-build-online-database/online-database-popul-deflator.csv", replace
 
 
 // -------------------------------------------------------------------------- //
@@ -581,7 +581,7 @@ sort unit bracket_order
 drop bracket_order
 order bracket housing equity other_wealth population unit
 
-export delimited "$website/$update_id/wealth-extrapolation-data.csv", replace
+export delimited "$work/03-build-online-database/wealth-extrapolation-data.csv", replace
 
 // -------------------------------------------------------------------------- //
 // Validation graphs for ultra-top wealth series

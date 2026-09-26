@@ -10,6 +10,18 @@ All notable changes to the RTI project are documented in this file.
 
 - **01-import-ici.do**: The ICI report is no longer downloaded from a URL. It must now be downloaded manually from <https://www.ici.org/research/stats/retirement> and saved as `raw-data/ici-data/ret_data.xls`.
 
+- **01-import-forbes.do, 03-build-monthly-forbes.do**: The real-time Forbes universe (2020 onwards) is now defined by **residence** instead of citizenship. US-based individuals are identified by the `state` field. This aligns the real-time part of the top-wealth series with DINA concepts and with the annual Forbes 400 part, whose `country == "United States"` filter is also a residence criterion, applied within a list Forbes restricts to US citizens. Non-citizen US residents cannot be backfilled before 2020: the annual source never collected them, so the splice at 2020 carries a level gap of about 1% for the top 400. Forbes intermittently blanks a person's location. When `state` and `city` are both empty the record carries no residence information at all, so the person's nearest known residence is carried across the gap (`uri` is stable over time); a blank `state` with a non-empty `city` is a genuine move abroad and stays excluded.
+
+- **03-build-online-database.do, 03-build-online-database-labor.do, 03-build-online-database-demographics.do**: These now write their intermediate CSVs under `work-data` rather than into the update folder.
+
+### Added
+
+- **03-build-website-payload.py**: New script, and the only one writing into `outputs/website/<update_id>`. It reads the intermediate CSVs from `work-data` and produces exactly what the website consumes — the four JSON files, `full-online-database.xlsx`, `wealth-extrapolation-data.csv` and `metadata.json` — so the update folder is an exact image of the website's `public/temp_data/`, and transferring an update is a plain copy of its contents. `metadata.json` carries `data_reference_date`, derived from `$date_end` and checked against the last period present in the database. The website reads it from there instead of a hand-maintained config file: that date is the base period for the site's Zillow/VTI/CPI projections, and a stale value shifts every projection without raising an error.
+
+### Removed
+
+- **03-build-online-database-json.py, 03-build-online-database-excel.py**: Merged into `03-build-website-payload.py`. Output is unchanged — the JSON files are byte-identical and the three Excel sheets match exactly.
+
 ---
 
 ## 2026-03-mouillet

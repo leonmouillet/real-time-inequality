@@ -100,4 +100,4 @@ rename thresholdlabor_income threshold_labor_income
 drop employed
 
 sort unit group year month
-export delimited "$website/$update_id/online-database-labor.csv", replace
+export delimited "$work/03-build-online-database-labor/online-database-labor.csv", replace

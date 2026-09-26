@@ -630,16 +630,25 @@ do "$programs/03-tabulate-demographics.do"
 // Online database (*)
 // -------------------
 
-cap mkdir "$website/$update_id"
+// The three programs below write intermediate CSVs under $work. The payload
+// script then turns them into the files the website consumes, and is the only
+// thing that writes into $website/$update_id — so that folder is an exact
+// image of the website's public/temp_data/ and can be copied over as a whole.
+
+cap mkdir "$work/03-build-online-database"
 do "$programs/03-build-online-database.do"
 
+cap mkdir "$work/03-build-online-database-labor"
 cap mkdir "$graphs/03-build-online-database-labor"
 do "$programs/03-build-online-database-labor.do"
 
+cap mkdir "$work/03-build-online-database-demographics"
 do "$programs/03-build-online-database-demographics.do"
 
-shell "$pythonscript" "$programs/03-build-online-database-json.py" "$website/$update_id"
-shell "$pythonscript" "$programs/03-build-online-database-excel.py" "$website/$update_id"
+cap mkdir "$website/$update_id"
+local date_end_num = $date_end
+shell "$pythonscript" "$programs/03-build-website-payload.py" ///
+    "$work" "$website/$update_id" "$update_id" `date_end_num'
 
 // -------------------------------------------------------------------------- //
 // 04 - Report the results

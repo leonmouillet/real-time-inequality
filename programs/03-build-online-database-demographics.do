@@ -91,4 +91,4 @@ order year month unit demo_type group ///
     population deflator
 sort year month demo_type group
 
-export delimited "$website/$update_id/online-database-demographics.csv", replace
+export delimited "$work/03-build-online-database-demographics/online-database-demographics.csv", replace
