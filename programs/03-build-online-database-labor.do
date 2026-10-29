@@ -78,20 +78,6 @@ by group unit: ipolate value time, gen(i)
 replace value = i if group == "Top 1%" & time == ym(1985, 12)
 drop i
 
-// Harmonize pop across brackets
-gegen pop = mean(pop), by(year month unit group) replace
-
-// Finalize pop by bracket share
-replace pop = 0.25*pop    if group == "1st Quartile"
-replace pop = 0.25*pop    if group == "2nd Quartile"
-replace pop = 0.25*pop    if group == "3rd Quartile"
-replace pop = 0.25*pop    if group == "4th Quartile"
-replace pop = 0.15*pop    if group == "Top 25%-10%"
-replace pop = 0.10*pop    if group == "Top 10%"
-replace pop = 0.01*pop    if group == "Top 1%"
-replace pop = 0.09*pop    if group == "Top 10%-1%"
-gegen pop = mean(pop), by(group year month unit) replace
-
 generate income = "labor_income"
 greshape wide value threshold, i(group year month unit pop) j(income) string
 renvars value*, predrop(5)

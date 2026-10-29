@@ -61,7 +61,7 @@ LABOR_CONCEPT   = 'labor_income'
 DEMO_CONCEPTS   = ['factor_income', 'pretax_income', 'disposable_income', 'posttax_income', 'wealth', 'labor_income']
 
 # Groups for which entry thresholds are not meaningful
-NO_THRESHOLD_GROUPS = {'Bottom 50%', 'First Quartile', 'Total'}
+NO_THRESHOLD_GROUPS = {'Bottom 50%', '1st Quartile', 'Total'}
 
 
 def csv_path(work_dir, filename):
@@ -165,19 +165,8 @@ def compute_derived_cols(df, concepts, pop_col):
 
 def build_income_wealth(work_dir):
     df = read_csv(work_dir, 'online-database.csv')
-    pop = read_csv(work_dir, 'online-database-popul-deflator.csv')
-
-    pop_cols = ['year', 'month', 'pop_adults', 'pop_working_age', 'pop_households']
-    df = df.merge(pop[pop_cols], on=['year', 'month'], how='left')
-
-    unit_to_pop = {
-        'adult_equal_split':       'pop_adults',
-        'working_age_equal_split': 'pop_working_age',
-        'adult_households':        'pop_households',
-    }
-    df['population'] = df.apply(
-        lambda r: r[unit_to_pop.get(r['unit'], 'pop_adults')], axis=1
-    )
+    # pop is the population of the group, so that *_per_unit is the group average
+    df = df.rename(columns={'pop': 'population'})
 
     df = add_quarter(df)
     df = deflate(df, INCOME_CONCEPTS)
@@ -195,9 +184,9 @@ def build_labor(work_dir):
     df  = read_csv(work_dir, 'online-database-labor.csv')
     pop = read_csv(work_dir, 'online-database-popul-deflator.csv')
 
-    df = df.merge(pop[['year', 'month', 'pop_working_age', 'deflator']],
-                  on=['year', 'month'], how='left')
-    df = df.rename(columns={'pop_working_age': 'population', 'pop': 'population_raw'})
+    df = df.merge(pop[['year', 'month', 'deflator']], on=['year', 'month'], how='left')
+    # pop is the population of the group, so that *_per_unit is the group average
+    df = df.rename(columns={'pop': 'population'})
 
     df = add_quarter(df)
     df = deflate(df, [LABOR_CONCEPT])
